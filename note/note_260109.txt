@@ -1,0 +1,202 @@
+1차 - 26.1.9
+
+
+준비 
+    1. Terminal - Terminator / tmux 
+        1. 화면분할 
+            1. ctrl+shift + E
+            2. ctrl + shift + O 
+        2. Tab 생성
+            1. ctrl + shift + T
+        3. TMUX 
+        4. 
+    2. VSCode install
+        1. 
+    3. GIThub ID 만들기
+        1. 관련 레퍼지토리 추가
+
+
+측위(GPS) 노드 
+ - 내가 어디에 있느냐??
+
+GPS - 
+GNSS - Global Navigation Satellite System
+ - US - GPS
+ - CN - BAIDU
+ - 
+
+LAT - latitude  / Degree / 36.xxx
+LON  - longitude /127.xxxx
+ALT
+
+구좌표계 - 평면좌표계
+
+1. ECEF - 
+2. UTM
+    1. NED (North - East - Downward)
+    2. ENU (East - North - up)
+3. 
+
+sensor_msgs
+std_msgs
+	std_msgs::msg::Int32
+geometry_msgs
+	geometry_msgs::msg::Pose
+		Pos : x,y,z / Rot : x y z w
+nav_msgs
+visualization_msgs
+
+
+TODO : ros2 topic으로 sensor/msgs/NavSatFix 메세지 callback 함수를 만들어서 
+위경도 값을 UTM xyz 값으로 변경하는 예제를 만들어오세요
+
+
+
+
+ros2 topic으로 sensor/msgs/NavSatFix 메세지를 내보낼 것임
+
+ros2 topic
+
+message / publisher / subscriber / 
+
+double a = 1.0;
+
+sensor_msgs::msgs::NavSatFix gps_in;
+
+struct test
+{
+
+  double latitude;
+  double longitude;
+  …
+
+}
+
+
+
+
+
+
+root@ai3ct-macbook:/etri_ws# ros2 interface show sensor_msgs/msg/NavSatFix
+# Navigation Satellite fix for any Global Navigation Satellite System
+#
+# Specified using the WGS 84 reference ellipsoid
+
+# header.stamp specifies the ROS time for this measurement (the
+#        corresponding satellite time may be reported using the
+#        sensor_msgs/TimeReference message).
+#
+# header.frame_id is the frame of reference reported by the satellite
+#        receiver, usually the location of the antenna.  This is a
+#        Euclidean frame relative to the vehicle, not a reference
+#        ellipsoid.
+std_msgs/Header header
+	builtin_interfaces/Time stamp
+		int32 sec
+		uint32 nanosec
+	string frame_id
+
+# Satellite fix status information.
+NavSatStatus status
+	#
+	int8 STATUS_NO_FIX =  -1        #
+	int8 STATUS_FIX =      0        #
+	int8 STATUS_SBAS_FIX = 1        #
+	int8 STATUS_GBAS_FIX = 2        #
+	int8 status
+	uint16 SERVICE_GPS =     1
+	uint16 SERVICE_GLONASS = 2
+	uint16 SERVICE_COMPASS = 4      #
+	uint16 SERVICE_GALILEO = 8
+	uint16 service
+
+# Latitude [degrees]. Positive is north of equator; negative is south.
+float64 latitude
+
+# Longitude [degrees]. Positive is east of prime meridian; negative is west.
+float64 longitude
+
+# Altitude [m]. Positive is above the WGS 84 ellipsoid
+# (quiet NaN if no altitude is available).
+float64 altitude
+
+# Position covariance [m^2] defined relative to a tangential plane
+# through the reported position. The components are East, North, and
+# Up (ENU), in row-major order.
+#
+# Beware: this coordinate system exhibits singularities at the poles.
+float64[9] position_covariance
+
+# If the covariance of the fix is known, fill it in completely. If the
+# GPS receiver provides the variance of each measurement, put them
+# along the diagonal. If only Dilution of Precision is available,
+# estimate an approximate covariance from that.
+
+uint8 COVARIANCE_TYPE_UNKNOWN = 0
+uint8 COVARIANCE_TYPE_APPROXIMATED = 1
+uint8 COVARIANCE_TYPE_DIAGONAL_KNOWN = 2
+uint8 COVARIANCE_TYPE_KNOWN = 3
+
+uint8 position_covariance_type
+
+
+
+
+#include “seoungmin_node.h”
+int main()
+{
+ “””input : camera image / LiDAR point cloud
+	output : object pose
+“””
+	seongmin_node a; //인식부
+	a.run();
+
+//	publish pose
+	  this->pubFinalPathCloud = this->create_publisher<geometry_msgs::msg::Pose>(“/test_pose”, 10);
+		
+		pubFinalPathCloud->publish(object_pose);
+}
+====================================
+ROS message :
+
+====================================
+#include “daegyu_node.h” // Path planner
+
+int main()
+{
+  this->subTileSize = this->create_subscription<geometry_msgs::msg::Pose>(
+      “/test_pose”,, 10, std::bind(&PseudoCamera::poseCallback, this, std::placeholders::_1));
+
+
+	daegyu_node b; //판단부
+ 	b.run();
+	obj_pose = b.get_obj_pose();
+	b.calculate_path(obj_pose);
+
+}
+
+
+void poseCallback(—— msg)
+{
+
+	obj_x = msg->position.x;
+	obj_y =
+}
+
+Pose get_obj_pose()
+{
+	pose.x = obj_x;
+	pose.y = obj_y;
+
+ return pose;
+}
+
+
+
+
+
+
+
+
+
+
