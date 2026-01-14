@@ -1,72 +1,68 @@
-#include <fake_gps_pub_node/fake_gps_pub.h>
 #include <chrono>
+#include <functional>
+#include <memory>
+#include <random>
+
+#include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp" // GPS 메시지 타입으로 변경
 
 using namespace std::chrono_literals;
-#define INFINITE 999999
 
-FakeGpsPub::FakeGpsPub(const std::string& node_name) : Node(node_name)
+class FakeGPSNode : public rclcpp::Node
 {
-  this->Timer = this->create_wall_timer(100ms, std::bind(&FakeGpsPub::TimerCallback, this));
-  this->pubUAMmodel = this->create_publisher<visualization_msgs::msg::Marker>("/uam_model", rclcpp::SensorDataQoS());
+public:
+  FakeGPSNode() : Node("fake_gps_node")
+  {
+    // GPS 전용 토픽 이름으로 발행 (메시지 타입: NavSatFix)
+    publisher_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/gps/fix", 10);
+    
+    // 1초에 한 번씩(1Hz) GPS 신호 갱신
+    timer_ = this->create_wall_timer(1s, std::bind(&FakeGPSNode::timer_callback, this));
 
-  this->subOdom = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/Odometry/simple_flight", rclcpp::SensorDataQoS(), std::bind(&FakeGpsPub::odomCallback, this, std::placeholders::_1));
+    // 기준 위치 설정 (예: 서울 시청 근처 위도/경도)
+    base_lat_ = 37.5665;
+    base_lon_ = 126.9780;
+    base_alt_ = 20.0;
+  }
 
-  getParams();
+private:
+  void timer_callback()
+  {
+    auto message = sensor_msgs::msg::NavSatFix();
+    message.header.stamp = this->get_clock()->now();
+    message.header.frame_id = "gps_link";
+
+    // 랜덤 노이즈 생성을 위한 설정
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    // 위도/경도의 아주 미세한 변화(약 1~10m 오차 범위) 생성
+    std::uniform_real_distribution<> lat_dis(-0.0001, 0.0001);
+    std::uniform_real_distribution<> lon_dis(-0.0001, 0.0001);
+    std::uniform_real_distribution<> alt_dis(-0.5, 0.5);
+
+    message.latitude = base_lat_ + lat_dis(gen);
+    message.longitude = base_lon_ + lon_dis(gen);
+    message.altitude = base_alt_ + alt_dis(gen);
+
+    // GPS 수신 상태 설정 (3: 기지국 보정 수준의 정밀도)
+    message.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
+    message.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
+
+    RCLCPP_INFO(this->get_logger(), "Publishing Fake GPS -> Lat: %.6f, Lon: %.6f, Alt: %.2f", 
+                message.latitude, message.longitude, message.altitude);
+    
+    publisher_->publish(message);
+  }
+
+  double base_lat_, base_lon_, base_alt_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_;
 };
-FakeGpsPub::~FakeGpsPub(){};
 
-void FakeGpsPub::getParams()
+int main(int argc, char * argv[])
 {
-  this->declare_parameter<double>("example_param", double(0.0));
-  this->m_example_param = this->get_parameter("example_param").as_double();
-}
-
-void FakeGpsPub::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  this->m_odom = *msg;
-  std::cout << "Callback" << std::endl;
-}
-
-void FakeGpsPub::TimerCallback()
-{
-  static auto prev_time = std::chrono::high_resolution_clock::now();
-
-  auto cur_time = std::chrono::high_resolution_clock::now();
-  m_dt = std::chrono::duration_cast<std::chrono::nanoseconds>(cur_time - prev_time).count() / 1e9;
-  prev_time = cur_time;
-
-  geometry_msgs::msg::Pose post_buf;
-  post_buf.position.x = 0.0;
-  post_buf.position.y = 0.0;
-  post_buf.position.z = 0.0;
-  post_buf.orientation.x = 0.0;
-  post_buf.orientation.y = 0.0;
-  post_buf.orientation.z = 0.0;
-  post_buf.orientation.w = 1.0;
-
-  pubUAMmodel->publish(MeshMarker(post_buf));
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 100, "dt: %f [msec]", m_dt);
-}
-
-visualization_msgs::msg::Marker FakeGpsPub::MeshMarker(const geometry_msgs::msg::Pose& pose_in)
-{
-   // Define the marker
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "base_link"; 
-  marker.header.stamp = this->now();
-  marker.ns = "test";
-  marker.id = 0;
-  marker.type = visualization_msgs::msg::Marker::CUBE;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.pose = pose_in;
-  marker.scale.x = 1.0;  
-  marker.scale.y = 1.0;  
-  marker.scale.z = 1.0;  
-  marker.color.a = 1.0;  
-  marker.color.r = 0.5;
-  marker.color.g = 0.5;
-  marker.color.b = 0.5;
-
-  return marker;
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<FakeGPSNode>());
+  rclcpp::shutdown();
+  return 0;
 }
