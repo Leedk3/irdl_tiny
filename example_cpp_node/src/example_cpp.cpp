@@ -6,11 +6,11 @@ using namespace std::chrono_literals;
 
 ExampleCPP::ExampleCPP(const std::string& node_name) : Node(node_name)
 {
-  this->Timer = this->create_wall_timer(100ms, std::bind(&ExampleCPP::TimerCallback, this));
+  this->Timer = this->create_wall_timer(1s, std::bind(&ExampleCPP::TimerCallback, this));
   this->pubUAMmodel = this->create_publisher<visualization_msgs::msg::Marker>("/uam_model", rclcpp::SensorDataQoS());
 
   this->subOdom = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/Odometry/simple_flight", rclcpp::SensorDataQoS(), std::bind(&ExampleCPP::odomCallback, this, std::placeholders::_1));
+      "/gps/utm", rclcpp::SensorDataQoS(), std::bind(&ExampleCPP::odomCallback, this, std::placeholders::_1));
 
   getParams();
 };
@@ -44,7 +44,6 @@ void ExampleCPP::TimerCallback()
   post_buf.orientation.z = 0.0;
   post_buf.orientation.w = 1.0;
 
-  pubUAMmodel->publish(MeshMarker(post_buf));
   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 100, "dt: %f [msec]", m_dt);
 }
 

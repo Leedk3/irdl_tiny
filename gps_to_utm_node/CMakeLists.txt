@@ -8,25 +8,24 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-# find GeographicLib
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GEOGRAPHICLIB REQUIRED geographiclib)
 
 include_directories(include ${GEOGRAPHICLIB_INCLUDE_DIRS})
 
-# 1. Library 
+#Library
 ament_auto_add_library(gps_to_utm SHARED
   src/gps_to_utm.cpp)
 
-target_link_libraries(gps_to_utm
-  ${GEOGRAPHICLIB_LIBRARIES}
+target_link_libraries(gps_to_utm 
+${GEOGRAPHICLIB_LIBRARIES}
 )
 
-# 2. Executable 
+#Executable
 ament_auto_add_executable(gps_to_utm_exe
-  src/gps_to_utm_node.cpp)
-
-target_link_libraries(gps_to_utm_exe
+  src/gps_to_utm_node.cpp
+)
+target_link_libraries(gps_to_utm_exe 
   gps_to_utm)
 
 ament_auto_package()

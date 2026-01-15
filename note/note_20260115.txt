@@ -22,3 +22,12 @@
 
     target_link_libraries(fake_gps_pub_exe ## fake_gps_pub_exe가 fake_gps_pub이 설계도를 보고 진행
     fake_gps_pub)
+
+#publisher와 subscirber의 관계 
+    #둘이 메세지를 주고 받을려면 맞춰야 하는것 
+        1. topic(우편 봉투의 이름)
+        2. type(어떤 종류의 메세지 인지) 
+        3. Qos(통신 규칙)
+
+#ROS2
+    ros2 run example_cpp_node(패키지 이름) example_cpp_exe(실행파일 이름)

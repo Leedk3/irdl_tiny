@@ -1,71 +1,47 @@
-#include <example_cpp_node/example_cpp.h>
-#include <chrono>
+#include "gps_to_utm_node/gps_to_utm.h"
 
-using namespace std::chrono_literals;
-#define INFINITE 999999
+GpsToUtm::GpsToUtm(const std::string &node_name) : Node(node_name) {
+    // 가짜 GPS 노드가 보내는 토픽 구독
+    gps_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+        "/gps/fix", 10, std::bind(&GpsToUtm::gps_callback, this, std::placeholders::_1));
 
-ExampleCPP::ExampleCPP(const std::string& node_name) : Node(node_name)
-{
-  this->Timer = this->create_wall_timer(100ms, std::bind(&ExampleCPP::TimerCallback, this));
-  this->pubUAMmodel = this->create_publisher<visualization_msgs::msg::Marker>("/uam_model", rclcpp::SensorDataQoS());
+    // 변환된 UTM 좌표를 발행할 퍼블리셔 (Odometry 타입 사용)
+    utm_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/gps/utm", 10);
 
-  this->subOdom = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/Odometry/simple_flight", rclcpp::SensorDataQoS(), std::bind(&ExampleCPP::odomCallback, this, std::placeholders::_1));
-
-  getParams();
-};
-ExampleCPP::~ExampleCPP(){};
-
-void ExampleCPP::getParams()
-{
-  this->declare_parameter<double>("example_param", double(0.0));
-  this->m_example_param = this->get_parameter("example_param").as_double();
+    RCLCPP_INFO(this->get_logger(), "GPS to UTM Converter Node Started.");
 }
 
-void ExampleCPP::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  this->m_odom = *msg;
-}
+GpsToUtm::~GpsToUtm() {}
 
-void ExampleCPP::TimerCallback()
-{
-  static auto prev_time = std::chrono::high_resolution_clock::now();
+void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
+    // 위도, 경도가 유효하지 않으면 무시
+    if (msg->status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
+        RCLCPP_WARN(this->get_logger(), "No GPS Fix...");
+        return;
+    }
 
-  auto cur_time = std::chrono::high_resolution_clock::now();
-  m_dt = std::chrono::duration_cast<std::chrono::nanoseconds>(cur_time - prev_time).count() / 1e9;
-  prev_time = cur_time;
+    double utm_x, utm_y;
+    int zone;
+    bool northp;
 
-  geometry_msgs::msg::Pose post_buf;
-  post_buf.position.x = 0.0;
-  post_buf.position.y = 0.0;
-  post_buf.position.z = 0.0;
-  post_buf.orientation.x = 0.0;
-  post_buf.orientation.y = 0.0;
-  post_buf.orientation.z = 0.0;
-  post_buf.orientation.w = 1.0;
+    try {
+        // WGS84(위경도) -> UTM 변환
+        GeographicLib::UTMUPS::Forward(msg->latitude, msg->longitude, zone, northp, utm_x, utm_y);
 
-  pubUAMmodel->publish(MeshMarker(post_buf));
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 100, "dt: %f [msec]", m_dt);
-}
+        auto odom_msg = nav_msgs::msg::Odometry();
+        odom_msg.header.stamp = msg->header.stamp;
+        odom_msg.header.frame_id = "utm_frame";
 
-visualization_msgs::msg::Marker ExampleCPP::MeshMarker(const geometry_msgs::msg::Pose& pose_in)
-{
-   // Define the marker
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "base_link"; 
-  marker.header.stamp = this->now();
-  marker.ns = "test";
-  marker.id = 0;
-  marker.type = visualization_msgs::msg::Marker::CUBE;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.pose = pose_in;
-  marker.scale.x = 1.0;  
-  marker.scale.y = 1.0;  
-  marker.scale.z = 1.0;  
-  marker.color.a = 1.0;  
-  marker.color.r = 0.5;
-  marker.color.g = 0.5;
-  marker.color.b = 0.5;
+        // UTM 좌표 대입 (미터 단위)
+        odom_msg.pose.pose.position.x = utm_x;
+        odom_msg.pose.pose.position.y = utm_y;
+        odom_msg.pose.pose.position.z = msg->altitude;
 
-  return marker;
+        utm_pub_->publish(odom_msg);
+
+        RCLCPP_INFO(this->get_logger(), "UTM Converted -> X: %.2f, Y: %.2f (Zone: %d%c)", 
+                    utm_x, utm_y, zone, (northp ? 'N' : 'S'));
+    } catch (const std::exception& e) {
+        RCLCPP_ERROR(this->get_logger(), "Conversion Error: %s", e.what());
+    }
 }
