@@ -1,0 +1,24 @@
+26.01.15
+
+#Library와 Executable의 관계
+
+    # Library ## 하나의 설계 도면 
+    ament_auto_add_library(fake_gps_pub SHARED  
+        src/fake_gps_pub.cpp) ## 설계도면의 이름 fake_gps_pub > 거기에 들어갈 재료들 fake_gps_pub.cpp (설계 도면의 내용)  
+
+
+    target_link_libraries(fake_gps_pub ## fake_gps_pub.cpp 여기 말고도 외부 OpenCV_LIBS 이러한 추가적인 라이브러리 불러옴
+        ${OpenCV_LIBS} 
+        Boost::system
+        Boost::filesystem
+        tf2::tf2            
+        tf2_ros::tf2_ros
+    )
+    
+
+    # Executable ## Library라는 설계도면을 실행
+    ament_auto_add_executable(fake_gps_pub_exe ## fake_gps_pub_exe(실제 실행하는 사람 이름) > fake_gps_pub_node.cpp(main문) 이거를 최종적으로 할것
+        src/fake_gps_pub_node.cpp)
+
+    target_link_libraries(fake_gps_pub_exe ## fake_gps_pub_exe가 fake_gps_pub이 설계도를 보고 진행
+    fake_gps_pub)

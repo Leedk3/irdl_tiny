@@ -17,10 +17,8 @@ ament_auto_find_build_dependencies()
 
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+
 
 include_directories(
     include
@@ -34,8 +32,7 @@ add_definitions(
 
 # Library
 ament_auto_add_library(fake_gps_pub SHARED
-      src/fake_gps_pub.cpp)
-
+  src/fake_gps_pub.cpp)
 
 target_link_libraries(fake_gps_pub
     ${OpenCV_LIBS}
@@ -44,11 +41,11 @@ target_link_libraries(fake_gps_pub
     tf2::tf2            
     tf2_ros::tf2_ros
 )
- 
+
 
 # Executable
 ament_auto_add_executable(fake_gps_pub_exe
-    src/fake_gps_pub_node.cpp)
+  src/fake_gps_pub_node.cpp)
 
 target_link_libraries(fake_gps_pub_exe
   fake_gps_pub)
