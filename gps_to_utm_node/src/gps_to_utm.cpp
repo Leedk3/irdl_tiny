@@ -39,8 +39,8 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
 
         utm_pub_->publish(odom_msg);
 
-        RCLCPP_INFO(this->get_logger(), "UTM Converted -> X: %.2f, Y: %.2f (Zone: %d%c)", 
-                    utm_x, utm_y, zone, (northp ? 'N' : 'S'));
+        RCLCPP_INFO(this->get_logger(), "UTM Converted -> X: %.2f, Y: %.2f, Z: %.2f (Zone: %d%c)", 
+                    utm_x, utm_y, zone, msg->altitude, (northp ? 'N' : 'S'));
     } catch (const std::exception& e) {
         RCLCPP_ERROR(this->get_logger(), "Conversion Error: %s", e.what());
     }
