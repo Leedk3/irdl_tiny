@@ -28,19 +28,25 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
         // WGS84(위경도) -> UTM 변환
         GeographicLib::UTMUPS::Forward(msg->latitude, msg->longitude, zone, northp, utm_x, utm_y);
 
+        double utm_x_origin;
+        double utm_y_origin;
+
+        GeographicLib::UTMUPS::Forward(37.5268303, 126.9271195, zone, northp, utm_x_origin, utm_y_origin);
+
         auto odom_msg = nav_msgs::msg::Odometry();
         odom_msg.header.stamp = msg->header.stamp;
         odom_msg.header.frame_id = "utm_frame";
+        odom_msg.child_frame_id = "";
 
         // UTM 좌표 대입 (미터 단위)
-        odom_msg.pose.pose.position.x = utm_x;
-        odom_msg.pose.pose.position.y = utm_y;
+        odom_msg.pose.pose.position.x = utm_x - utm_x_origin;
+        odom_msg.pose.pose.position.y = utm_y - utm_y_origin;
         odom_msg.pose.pose.position.z = msg->altitude;
 
         utm_pub_->publish(odom_msg);
 
         RCLCPP_INFO(this->get_logger(), "UTM Converted -> X: %.2f, Y: %.2f, Z: %.2f (Zone: %d%c)", 
-                    utm_x, utm_y, zone, msg->altitude, (northp ? 'N' : 'S'));
+                    odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y, zone, msg->altitude, (northp ? 'N' : 'S'));
     } catch (const std::exception& e) {
         RCLCPP_ERROR(this->get_logger(), "Conversion Error: %s", e.what());
     }

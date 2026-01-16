@@ -30,4 +30,4 @@
         3. Qos(통신 규칙)
 
 #ROS2
-    ros2 run example_cpp_node(패키지 이름) example_cpp_exe(실행파일 이름)
+    ros2 run example_cpp_node(패키지 이름) example_cpp_exe(실행파일 이름) > node 일 시작

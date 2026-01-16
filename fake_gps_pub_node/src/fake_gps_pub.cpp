@@ -9,9 +9,9 @@ FakeGpsPub::FakeGpsPub(const std::string &node_name) : Node(node_name) {
     // 2. 타이머 설정 (1초마다 GPS 신호 생성)
     timer_ = this->create_wall_timer(1s, std::bind(&FakeGpsPub::timer_callback, this));
 
-    // 3. 기준 위치 설정 (서울시청 근처)
-    base_lat_ = 37.5665;
-    base_lon_ = 126.9780;
+    // 3. 기준 위치 설정 (여의도 근처)
+    base_lat_ = 37.5268303;
+    base_lon_ = 126.9271195;
     base_alt_ = 20.0;
 
     // 난수 생성기 초기화
