@@ -6,7 +6,7 @@ using namespace std::chrono_literals;
 
 ExampleCPP::ExampleCPP(const std::string& node_name) : Node(node_name)
 {
-  this->Timer = this->create_wall_timer(1s, std::bind(&ExampleCPP::TimerCallback, this));
+  this->Timer = this->create_wall_timer(0.1s, std::bind(&ExampleCPP::TimerCallback, this));
   this->pubUAMmodel = this->create_publisher<visualization_msgs::msg::Marker>("/uam_model", rclcpp::SensorDataQoS());
 
   this->subOdom = this->create_subscription<nav_msgs::msg::Odometry>(

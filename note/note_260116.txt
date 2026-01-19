@@ -1,4 +1,4 @@
-1. Install JOSM
+1. Install JOSM 
     https://josm.openstreetmap.de/wiki/Download#Ubuntu
     $ sudo gedit /etc/apt/sources.list.d/josm.list
     $ sudo apt-get install apt-transport-https
