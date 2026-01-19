@@ -5,13 +5,13 @@
 GpsToUtm::GpsToUtm(const rclcpp::NodeOptions & options) 
 : Node("gps_to_utm_node", options), last_x_(0.0), last_y_(0.0), first_run_(true) {
     
-    // 1. 구독 및 발행 설정
+    // 구독 및 발행 설정
     gps_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
         "/random/flight/gps", 10, std::bind(&GpsToUtm::gps_callback, this, std::placeholders::_1));
 
     utm_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/gps/utm", 10);
 
-    // 2. 초기 방향값 설정 (기본값: 정면)
+    // 초기 방향값 설정 (기본값: 정면)
     current_q_.setRPY(0, 0, 0);
 
     RCLCPP_INFO(this->get_logger(), "GPS to UTM Converter with Heading Started.");
@@ -20,7 +20,7 @@ GpsToUtm::GpsToUtm(const rclcpp::NodeOptions & options)
 GpsToUtm::~GpsToUtm() {}
 
 void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
-    // 1. GPS 고정 상태 확인 (Fix가 안 되면 리턴)
+    // GPS 고정 상태 확인 (Fix가 안 되면 리턴)
     if (msg->status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Waiting for GPS Fix...");
         return;
@@ -34,7 +34,7 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
     bool northp;
 
     try {
-        // 2. WGS84 -> UTM 좌표 변환
+        // WGS84 -> UTM 좌표 변환
         GeographicLib::UTMUPS::Forward(msg->latitude, msg->longitude, zone, northp, utm_x, utm_y);
         GeographicLib::UTMUPS::Forward(base_lat, base_lon, zone, northp, utm_x_origin, utm_y_origin);
 
@@ -47,7 +47,7 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
         double curr_x = utm_x - utm_x_origin;
         double curr_y = utm_y - utm_y_origin;
 
-        // 3. 진행 방향(Heading) 계산
+        // 진행 방향(Heading) 계산
         if (!first_run_) {
             double dx = curr_x - last_x_;
             double dy = curr_y - last_y_;
@@ -62,7 +62,7 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
             first_run_ = false;
         }
 
-        // 4. Odometry 메시지에 데이터 채우기
+        // Odometry 메시지에 데이터 채우기
         odom_msg.pose.pose.position.x = curr_x;
         odom_msg.pose.pose.position.y = curr_y;
         odom_msg.pose.pose.position.z = msg->altitude;
@@ -76,10 +76,10 @@ void GpsToUtm::gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
         last_x_ = curr_x;
         last_y_ = curr_y;
 
-        // 5. 토픽 발행
+        // 토픽 발행
         utm_pub_->publish(odom_msg);
 
-        // 6. 백엔드 터미널 실시간 정보 출력
+        // 백엔드 터미널 실시간 정보 출력
         RCLCPP_INFO(this->get_logger(), 
             "[Live] X: %7.2f | Y: %7.2f | Z: %7.2f",
             odom_msg.pose.pose.position.x,
