@@ -31,32 +31,31 @@ RandomFlightGps::RandomFlightGps(const rclcpp::NodeOptions & options)
 RandomFlightGps::~RandomFlightGps() {}
 
 void RandomFlightGps::update_position() {
-    // 1. 가속도 설정 (최대 속도에 빠르게 도달하도록 배율 조정)
+    // 가속도 설정 (최대 속도에 빠르게 도달하도록 배율 조정)
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
     vx += dist(gen_) * 6.0;  
     vy += dist(gen_) * 6.0;
     vz += dist(gen_) * 2.0;
 
-    // 2. [핵심] 최대 속도를 시속 200km로 제한
-    // 200km/h = 약 55.56m/s
+    // 최대 속도를 시속 200km로 제한
     const double max_spd_ms = 55.56;
     vx = std::clamp(vx, -max_spd_ms, max_spd_ms);
     vy = std::clamp(vy, -max_spd_ms, max_spd_ms);
     vz = std::clamp(vz, -15.0, 15.0); // 고도 변화는 안전을 위해 초속 15m 제한
 
-    // 3. 물리 기반 변화량 계산 (dt = 0.1s)
+    // 물리 기반 변화량 계산 (dt = 0.1s)
     double dx = vx * 0.1;
     double dy = vy * 0.1;
 
     const double lat_const = 111319.9;
     const double lon_const = 111319.9 * std::cos(current_lat * M_PI / 180.0);
 
-    // 4. 좌표 업데이트
+    // 좌표 업데이트
     current_lat += (dy / lat_const);
     current_lon += (dx / lon_const);
     current_alt += (vz * 0.1);
 
-    // 5. 10km x 10km x 5km 영역 제한
+    // 10km x 10km x 5km 영역 제한
     // 위도 방향 제한 : 약 10km (반경 5km = 약 0.045도)
     if (std::abs(current_lat - base_lat) > 0.045) {
         vy *= -1.1; 
@@ -79,7 +78,7 @@ void RandomFlightGps::update_position() {
         current_alt = 20.0;
     }
 
-    // 6. ROS2 메시지 발행
+    // ROS2 메시지 발행
     auto msg = sensor_msgs::msg::NavSatFix();
     msg.header.stamp = this->now();
     msg.header.frame_id = "gps_link";
@@ -90,8 +89,7 @@ void RandomFlightGps::update_position() {
 
     publisher_->publish(msg);
 
-    // 7. 결과 백엔드 출력 (시속 km/h 단위로 확인)
-    double current_speed_kmh = std::sqrt(vx*vx + vy*vy + vz*vz) * 3.6;
+    // 결과 백엔드 출력 (시속 km/h 단위로 확인)
     RCLCPP_INFO(this->get_logger(), 
         "[GPS Out] Lat: %.7f | Lon: %.7f | Alt: %.2f m",
         msg.latitude, msg.longitude, msg.altitude);
