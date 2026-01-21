@@ -30,8 +30,7 @@ target_link_libraries(gps_to_utm ${GEOGRAPHICLIB_LIBRARIES})
 
 # Executable 
 ament_auto_add_executable(gps_to_utm_exe
-  src/gps_to_utm_node.cpp
-)
+  src/gps_to_utm_node.cpp)
 
 # 실행 파일에 라이브러리 및 ROS 2 의존성 연결
 target_link_libraries(gps_to_utm_exe gps_to_utm)
