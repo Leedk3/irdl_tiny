@@ -2,8 +2,7 @@
 
 RadarMonitor::RadarMonitor(const rclcpp::NodeOptions & options) 
 : Node("radar_monitor_node", options) {
-    utm_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-        "/radar/detected_utm", 10, 
+    utm_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>("/radar/detected_utm", 10, 
         std::bind(&RadarMonitor::radarCallback, this, std::placeholders::_1));
 
     RCLCPP_INFO(this->get_logger(), "Radar Monitor Started. Waiting for target detection...");
@@ -23,10 +22,8 @@ void RadarMonitor::radarCallback(const geometry_msgs::msg::PointStamped::SharedP
     double target_alt = base_alt + rel_z;
 
     // 터미널 시각화 출력
-    std::cout << "\033[2J\033[1;1H"; // 터미널 화면 갱신 (Clear)
-    std::cout << "[RADAR MONITOR SYSTEM]" << std::endl;
-    std::cout << "--------------------------------------------------" << std::endl;
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "GPS (절대):  Lattitude: " << target_lat << " | Lontitude: " << target_lon << "| Altitude: " << target_alt << std::endl;
-    std::cout << "UTM (상대):  X: " << rel_x << " | Y: " << rel_y << " | Z: " << rel_z << std::endl;
+    std::cout << "[RADAR MONITOR]" << std::endl;
+    std::cout << std::fixed << std::setprecision(7);
+    std::cout << "GPS(global):  Lattitude: " << target_lat << " | Lontitude: " << target_lon << "| Altitude: " << target_alt << std::endl;
+    std::cout << "UTM(local):  X: " << rel_x << " | Y: " << rel_y << " | Z: " << rel_z << std::endl;
 }

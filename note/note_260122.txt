@@ -24,3 +24,47 @@
         <build_type>ament_cmake</build_type>
     </export>
     </package>
+
+2. colcon build 하고 나서 터미널 초기화 
+    source install/setup.bash < 이코드 무조건 실행
+
+Goal : 
+Ground
+ 1. Radar tracking module
+ 2. Deploy multiple intruder
+
+Mobile
+ 3. Ground surveillance system --> mobile env.(Ownship perspective)
+
+ - Known : Ground truth
+             - simulated object
+             - pose is updated by simulated acceleration
+ - Radar : update range, azimuth(angle), altitude, velocity by # Hz
+            (Include sensor noise(range field))
+
+Tracking module
+ - Measure :  x,y,z pose
+ - Model : velocity, acceleration ,... 
+
+Deploy multiple object
+ - ID tracking module
+
+
+3. 레이더 매커니즘
+    - Range(거리)
+     거리 계산 Range = dt*C(빛의 속도)/2
+
+    - Azimush(방위각)
+     지면으로 부터 물체가 있는 위치의 각도 
+
+    - Altitude(고도)
+     고도 = R(거리)*cos@(각도값) 
+
+    - Velocity(속도)
+     도플러 효과를 통해 속도 계산 
+     #도플러 효과: 내가 쏜 주파수(f1)와 상대방을 맞고 돌아온 주파수(f2) 차이를 통해 거리 계산
+       도플러 주파수(fd) = f1 - f2 =  2Vr / 파장
+
+    - Update rate (Hz)
+     10Hz: 1초당 10번의 데이터 갱신 (고속 비행체 레이더)
+     1Hz: 1초당 1번의 데이터 갱신 (장거리 레이더)
