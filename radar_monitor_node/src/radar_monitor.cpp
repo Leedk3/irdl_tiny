@@ -27,6 +27,6 @@ void RadarMonitor::radarCallback(const geometry_msgs::msg::PointStamped::SharedP
     std::cout << "[RADAR MONITOR SYSTEM]" << std::endl;
     std::cout << "--------------------------------------------------" << std::endl;
     std::cout << std::fixed << std::setprecision(3);
-    std::cout << "GPS (절대):  Lattitude: " << target_lat << " | Lontitude: " << target_lon "| Altituce: " << target_alt << std::endl;
-    std::cout << "UTM (상대):  X: " << rel_x << " | Y: " << rel_y << " | Z: " << r_z << std::endl;
+    std::cout << "GPS (절대):  Lattitude: " << target_lat << " | Lontitude: " << target_lon << "| Altitude: " << target_alt << std::endl;
+    std::cout << "UTM (상대):  X: " << rel_x << " | Y: " << rel_y << " | Z: " << rel_z << std::endl;
 }

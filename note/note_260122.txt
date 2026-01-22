@@ -1,0 +1,26 @@
+1. 패키지 뜯어보기 
+    //문서 선언 및 표준 규격 
+    <?xml version="1.0"?>  
+    <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+    <package format="3">
+
+    //패키지의 기본 정보
+    <name>radar_monitor_node</name>
+    <version>0.0.1</version>
+    <description>Radar target monitoring package with UTM to GPS conversion</description>
+    <maintainer email="user@todo.todo">kimseongmin</maintainer>
+    <license>Apache License 2.0</license>
+    
+    //빌드의 의존성 도구(ament_cmake_auto < 빌드 시 사용)
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
+    
+    //실행 및 빌드 의존성 
+    <depend>rclcpp</depend> < ROS2 node, subscriber, publusher 생성 기능
+    <depend>geometry_msgs</depend> < 좌표 데이터 정의
+    
+    
+    //시스템 내보내기 설정 > 이 패키지가 ament_cmake 방식으로 만들어졌다 colcon build가 어떻게 처리할지 판단.
+    <export> 
+        <build_type>ament_cmake</build_type>
+    </export>
+    </package>
