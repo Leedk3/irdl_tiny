@@ -1,0 +1,14 @@
+#파일 구성하는 법
+ros_ws
+    - src
+        - perception 
+            -example_cpp_node
+        - navigation
+            - navigation_node
+        - planning 
+            - planning_node
+
+    # colcon build
+    - build
+    - install
+    - log

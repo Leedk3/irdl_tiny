@@ -1,0 +1,17 @@
+2026.01.14
+
+#git hub 사용키
+git status > 기존 파일과 뭐가 달라짐?
+git push >  깃 주소로 파일을 집어 넣기
+git add . > 변화된 파일 저장 
+git commit -m "(fake gps pub) > " 변화된것 내용 코멘트
+git remote set-url origin https://github.com/사용자이름/새로운-리포지토리.git > 경로 바꾸기 
+git remote -v > 경로가 지금 어떤거야?
+
+#ROS2
+topic > 정보를 말하고 있는 통로
+node > 한 가지 기능을 수행하기 위한 독립적인 실행 프로그램
+ros2 topic iist > topic의 종류가 지금 뭐가 있어?
+ros2 topic info /(이름)gps/fix > 지금 topic(통로)에 퍼블리셔 몇개? 섭스크라이버 몇개?
+ros2 interface show (이름)sensor_msgs/msg/NavSatFix > sensor_msgs/msg/NavSatFix 이것의 구조가 어케 생겼어?
+colcon build --symlink-install > colcon 빌드 하는 코드

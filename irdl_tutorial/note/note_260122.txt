@@ -1,0 +1,70 @@
+1. 패키지 뜯어보기 
+    //문서 선언 및 표준 규격 
+    <?xml version="1.0"?>  
+    <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+    <package format="3">
+
+    //패키지의 기본 정보
+    <name>radar_monitor_node</name>
+    <version>0.0.1</version>
+    <description>Radar target monitoring package with UTM to GPS conversion</description>
+    <maintainer email="user@todo.todo">kimseongmin</maintainer>
+    <license>Apache License 2.0</license>
+    
+    //빌드의 의존성 도구(ament_cmake_auto < 빌드 시 사용)
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
+    
+    //실행 및 빌드 의존성 
+    <depend>rclcpp</depend> < ROS2 node, subscriber, publusher 생성 기능
+    <depend>geometry_msgs</depend> < 좌표 데이터 정의
+    
+    
+    //시스템 내보내기 설정 > 이 패키지가 ament_cmake 방식으로 만들어졌다 colcon build가 어떻게 처리할지 판단.
+    <export> 
+        <build_type>ament_cmake</build_type>
+    </export>
+    </package>
+
+2. colcon build 하고 나서 터미널 초기화 
+    source install/setup.bash < 이코드 무조건 실행
+
+Goal : 
+Ground
+ 1. Radar tracking module
+ 2. Deploy multiple intruder
+
+Mobile
+ 3. Ground surveillance system --> mobile env.(Ownship perspective)
+
+ - Known : Ground truth
+             - simulated object
+             - pose is updated by simulated acceleration
+ - Radar : update range, azimuth(angle), altitude, velocity by # Hz
+            (Include sensor noise(range field))
+
+Tracking module
+ - Measure :  x,y,z pose
+ - Model : velocity, acceleration ,... 
+
+Deploy multiple object
+ - ID tracking module
+
+
+3. 레이더 매커니즘
+    - Range(거리)
+     거리 계산 Range = dt*C(빛의 속도)/2
+
+    - Azimush(방위각)
+     지면으로 부터 물체가 있는 위치의 각도 
+
+    - Altitude(고도)
+     고도 = R(거리)*cos@(각도값) 
+
+    - Velocity(속도)
+     도플러 효과를 통해 속도 계산 
+     #도플러 효과: 내가 쏜 주파수(f1)와 상대방을 맞고 돌아온 주파수(f2) 차이를 통해 거리 계산
+       도플러 주파수(fd) = f1 - f2 =  2Vr / 파장
+
+    - Update rate (Hz)
+     10Hz: 1초당 10번의 데이터 갱신 (고속 비행체 레이더)
+     1Hz: 1초당 1번의 데이터 갱신 (장거리 레이더)
