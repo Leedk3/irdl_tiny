@@ -1,0 +1,54 @@
+1. ROS2에서 어떻게 정의 하는지  
+
+    //GPS 메시지 발행
+    auto gps_msg = sensor_msgs::msg::NavSatFix(); // NavSatFix() 빈 봉투
+    gps_msg.header.stamp = this->now(); // 지금 데이터가 담긴 시간을 기록
+    gps_msg.header.frame_id = "map"; // map이라는 기준 좌표계 
+    gps_msg.latitude = current_lat; // 위도 담기
+    gps_msg.longitude = current_lon; // 경도 담기
+    gps_msg.altitude = current_alt; // 고도 담기
+    publisher_->publish(gps_msg); // gps_msg 구독할때 읽어야 하는 부분
+
+    // RViz 시각화 (앞머리 방향 계산 포함)
+    auto marker = visualization_msgs::msg::Marker(); // RViz에 그릴 Marker() 도화지
+    marker.header.stamp = this->now(); // 이 그림을 그리는 시간
+    marker.header.frame_id = "map"; // map이라는 기준 좌표계
+    marker.type = visualization_msgs::msg::Marker::ARROW; // RViz에 표시되는 형태(화살표)
+    marker.action = visualization_msgs::msg::Marker::ADD; // 새로운게 나타나면 갱신
+
+    // 위치 (m 단위)
+    marker.pose.position.x = (current_lon - base_lon) * lon_const;
+    marker.pose.position.y = (current_lat - base_lat) * lat_const;
+    marker.pose.position.z = current_alt;
+
+    // 진행 방향(Yaw, Pitch) #3번 내용 참조
+    double yaw = std::atan2(vy, vx);
+    double pitch = std::atan2(-vz, std::sqrt(vx*vx + vy*vy));
+
+    tf2::Quaternion q;
+    q.setRPY(0, pitch, yaw); // Roll=0, Pitch, Yaw 적용
+    marker.pose.orientation.x = q.x(); // X축
+    marker.pose.orientation.y = q.y(); // Y축
+    marker.pose.orientation.z = q.z(); // Z축
+    marker.pose.orientation.w = q.w(); // 회전
+
+2. 구면 좌표계 직교 좌표계 변환 
+    -위도 구하기
+        360 deg = 2pi(파이)R(지구반지름)m 
+        1 deg = 2pi(파이)R(지구반지름)/360m
+    -경도 구하기
+        360 deg = 2pi(파이)R(지구반지름)cos(현재 위도)m *왜 cos(현재 위도)? = 경도선은 위로 올라갈 수록 좁아져서 R값이 작아짐  
+        1 deg = 2pi(파이)R(지구반지름)/360m
+
+3.  Yaw, Pitch구하기 
+    속도 벡터 V = {V(x), V(y), V(z)}
+    -Yaw: x,y 축에서 어느 방향으로 향하고 있는지(경도)
+        Yaw: tan^-1 = V(x)/V(y) 각도의 형태로 어느 방향으로 속도가 향하는 지 나옴
+    
+    - Pitch: z축 방향에서 어디를 향하고 있는지(위도) 
+        Pitch: tan^-1 = -root(V(x)^2 + V(y)^2)/V(z)  
+
+4. 파일 구성 컨셉
+    -example.h > 여기서는 함수 껍데기들만 구현(함수 및 변수 선언)
+    -example_node.cpp > 여기는 노드 실행 담당(main함수)
+    -example.cpp > 여기는 노드가 실행하는 구체적인 함수 기능들 서술(함수의 세부 기능 서술)
