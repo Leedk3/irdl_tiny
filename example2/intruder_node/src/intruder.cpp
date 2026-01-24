@@ -44,7 +44,7 @@ void Intruder::update_and_publish_intruder() {
     double utm_x = (current_lon - base_lon) * lon_const;
     double utm_y = (current_lat - base_lat) * lat_const;
 
-    // 화살표 궤적 발행
+    // 화살표 궤적 발행 
     double yaw = std::atan2(vy, vx);
     double pitch = std::atan2(-vz, std::sqrt(vx*vx + vy*vy));
 
