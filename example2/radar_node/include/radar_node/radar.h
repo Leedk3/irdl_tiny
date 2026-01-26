@@ -43,8 +43,8 @@ private:
 
     const double RADAR_RADIUS = 3000.0;
     const double BASE_X = 0.0, BASE_Y = 0.0, BASE_Z = 0.0;
-    const double base_lat = 37.5268303; 
-    const double base_lon = 126.9271195; 
+    const double base_lat = 37.5268303;
+    const double base_lon = 126.9271195;
     const double base_alt = 10.0;
 };
 

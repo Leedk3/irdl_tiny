@@ -15,7 +15,7 @@ Radar::Radar(const rclcpp::NodeOptions & options)
 
     // 1초당 스캔 영역 설정 (1초에 얼만큼 실행 할껀지 1000ms(1초)를 360번 실행)
     scan_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(1000/360), 
+        std::chrono::milliseconds(1000/120), //1000/120 1초에 120번 실행 3도씩 회전 
         std::bind(&Radar::publish_scanning_beam, this));
 }
 
@@ -38,35 +38,38 @@ void Radar::intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) 
     double distance = std::sqrt(std::pow(rel_x, 2) + std::pow(rel_y, 2) + std::pow(rel_z, 2));
 
     if (distance <= RADAR_RADIUS && rel_z >= 0) { // 거리가 반구 영역 안이면
-        double target_azimuth = std::atan2(rel_y, rel_x); //x,y 좌표값을 알 받아옴
+        double target_azimuth = std::atan2(rel_y, rel_x); //x,y 좌표값을 통해 각도값 계산
         if (target_azimuth < 0) target_azimuth += 2.0 * M_PI; //arctan이 음수 값으로 가는거 방지
 
         double angle_diff = std::abs(target_azimuth - current_angle_);
         if (angle_diff > M_PI) angle_diff = 2.0 * M_PI - angle_diff;
 
-        // 세워진 원판(빔)의 두께 범위 내에 있으면 감지
-        if (angle_diff < (M_PI)) { 
+        // 세워진 원판(빔)의 두께 범위 내에 있으면 감지 180/60 = 3도 영역으로 회전  
+        if (angle_diff < (M_PI/60)) { 
             publish_detection(tx, ty, tz);
         }
     }
 }
 
+//[함수2] 레이더 스캔 영역을 시각화 
 void Radar::publish_scanning_beam() {
     cleanup_target_traces();
-
+    
+    //레이더 스캔 영역을 담기 위한 토픽
     visualization_msgs::msg::Marker beam;
     beam.header.frame_id = "map";
     beam.header.stamp = this->now();
     beam.ns = "active_beam_plate";
     beam.id = 10;
-    beam.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
-    beam.action = visualization_msgs::msg::Marker::ADD;
+    beam.type = visualization_msgs::msg::Marker::TRIANGLE_LIST; //삼각형의 형태로 1/4원을 그려냄 
+    beam.action = visualization_msgs::msg::Marker::ADD; //이 정보를 새로 그리거나 이미 있으면 정보를 업데이트
     beam.pose.orientation.w = 1.0;
     beam.scale.x = 1.0; beam.scale.y = 1.0; beam.scale.z = 1.0;
     
-    // 현재 회전하는 원판 빔 (밝은 하늘색)
-    beam.color.a = 0.7; beam.color.r = 0.0; beam.color.g = 0.8; beam.color.b = 1.0;
-
+    // 레이더 색깔 및 투명도 (밝은 하늘색)
+    beam.color.r = 0.0; beam.color.g = 0.8; beam.color.b = 1.0;
+    beam.color.a = 0.5; 
+    
     // z축 수직 1/4 원판 생성 (고도 0도 ~ 90도)
     int segments = 30; 
     for (int i = 0; i < segments; ++i) {
@@ -93,18 +96,20 @@ void Radar::publish_scanning_beam() {
         accumulated_beam_points_.push_back(p2);
     }
     marker_pub_->publish(beam);
+
+    // 위에 [함수2]의 실행 결과 값을 [함수3]에 담아 놓음
     publish_visual_markers();
 
-    // 1/4원(90도) 스캔 회전 로직
-    current_angle_ += (M_PI / 2.0 / 20.0); 
+    // 레이더 스캔 회전 로직
+    current_angle_ += (2.0 * M_PI / 20.0); 
 
-    if (current_angle_ >= M_PI / 2.0) {
+    if (current_angle_ >= 2.0 * M_PI / 2.0) {
         current_angle_ = 0.0;
         accumulated_beam_points_.clear(); // 초기화
-        RCLCPP_INFO(this->get_logger(), "Scan Reset");
     }
 }
 
+//[함수3]
 void Radar::publish_visual_markers() {
     // 1. 중첩되어 쌓이는 영역 (잔상 돔)
     visualization_msgs::msg::Marker dome;
