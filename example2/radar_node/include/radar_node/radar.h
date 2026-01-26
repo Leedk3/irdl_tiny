@@ -2,10 +2,15 @@
 #define RADAR_H_
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "visualization_msgs/msg/marker.hpp"
-#include <cmath>
+#include "geometry_msgs/msg/point_stamped.hpp"
 #include <vector>
+
+struct TargetTrace {
+    geometry_msgs::msg::Point point;
+    rclcpp::Time timestamp;
+};
 
 class Radar : public rclcpp::Node {
 public:
@@ -13,33 +18,34 @@ public:
     virtual ~Radar();
 
 private:
-    // [함수1] 1Hz 스캔 루프
-    void perform_scan();
-
-    // [함수2] 인트루더 위치 업데이트 (백그라운드에서 위치만 갱신)
-    void intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
-
-    // [함수3] 감지된 위치에 점 찍기
-    void publish_detection_point(double x, double y, double z);
-
-    // [함수4] 레이더 돔 가시화
-    void publish_radar_dome();
-
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr intruder_sub_;
-    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
-    rclcpp::TimerBase::SharedPtr timer_;
-
-    // 레이더 좌표 및 설정
-    double radar_lat, radar_lon, radar_alt;
-    double detection_range = 3000.0; // 3km
-    double current_angle_ = 0.0; // 현재 스캔 빔의 각도
-    double beam_width_ = 20.0;   // 스캔 빔의 너비 (도)
+    //[함수1] intruder 위치 정보 구독
+    void intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg); 
+    //[함수2] radar 스캔 영역 가시화
+    void publish_scanning_beam();
     
-    // 현재 인트루더의 최신 위치 (레이더가 스캔할 때 꺼내 쓰는 '상태')
-    sensor_msgs::msg::NavSatFix current_intruder_gps_;
-    bool has_gps_data_ = false;
+    //[함수3] intruder 감지시 점 표시
+    void publish_visual_markers();
+    
+    //[함수4] intruder의 위치 정보 발행
+    void publish_detection(double tx, double ty, double tz);
+    
+    //[함수5] intruder 감지 점 들 제거 
+    void cleanup_target_traces();
 
-    int detection_id_cnt = 0;
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscriber_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_; 
+    rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr utm_pos_pub_;
+    rclcpp::TimerBase::SharedPtr scan_timer_;
+
+    double current_angle_; // 수평 회전각 (Azimuth)
+    std::vector<geometry_msgs::msg::Point> accumulated_beam_points_;
+    std::vector<TargetTrace> target_traces_;
+
+    const double RADAR_RADIUS = 3000.0;
+    const double BASE_X = 0.0, BASE_Y = 0.0, BASE_Z = 0.0;
+    const double base_lat = 37.5268303; 
+    const double base_lon = 126.9271195; 
+    const double base_alt = 10.0;
 };
 
 #endif

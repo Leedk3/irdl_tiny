@@ -8,16 +8,12 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-# Library 
+# 라이브러리 빌드
 ament_auto_add_library(radar SHARED
   src/radar.cpp
 )
-target_include_directories(radar PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
 
-# Executable 
+# 실행 파일 빌드
 ament_auto_add_executable(radar_exe
   src/radar_node.cpp
 )
@@ -27,11 +23,5 @@ target_link_libraries(radar_exe
   ${ament_cmake_auto_LIBRARIES}
 )
 
-target_include_directories(radar_exe PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
-
-install(TARGETS radar_exe
-  DESTINATION lib/${PROJECT_NAME})
-
-ament_auto_package()
+# 헤더 설치 경로 경고 해결 및 패키징
+ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)
