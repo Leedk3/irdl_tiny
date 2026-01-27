@@ -1,32 +1,32 @@
-#include "intruder_node/intruder.h"
+#include "ownship_node/ownship.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <cmath>
 #include <algorithm>
 
 using namespace std::chrono_literals;
 
-Intruder::Intruder(const rclcpp::NodeOptions & options) 
-: Node("intruder", options), gen_(rd_()) {
+Ownship::Ownship(const rclcpp::NodeOptions & options) 
+: Node("ownship", options), gen_(rd_()) {
     // 파라미터 및 퍼블리셔 초기화
     this->declare_parameter("scale_x", 30.0);
     this->declare_parameter("scale_y", 10.0);
     this->declare_parameter("scale_z", 10.0);
 
-    publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/intruder/gps", 10);
-    marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/intruder/marker", 10);
+    publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/ownship/gps", 10);
+    marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/ownshipr/marker", 10);
     
     // 타이머는 첫 번째 함수를 호출
-    timer_ = this->create_wall_timer(100ms, std::bind(&Intruder::update_and_publish_intruder, this)); 
+    timer_ = this->create_wall_timer(100ms, std::bind(&Ownship::update_and_publish_ownship, this)); 
 
     base_lat = 37.5268303; base_lon = 126.9271195; base_alt = 10.0;
     current_lat = base_lat; current_lon = base_lon; current_alt = base_alt; 
     vx = 5.0; vy = 5.0; vz = 1.0; 
 }
 
-Intruder::~Intruder() {}
+Ownship::~Ownship() {}
 
 // [함수1: 물리 및 시각화]
-void Intruder::update_and_publish_intruder() {
+void Ownship::update_and_publish_ownship() {
     // 물리 계산 로직 (속도 변화, 경계 제한)
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
     vx += dist(gen_) * 6.0; vy += dist(gen_) * 6.0; vz += dist(gen_) * 2.0;
@@ -40,7 +40,7 @@ void Intruder::update_and_publish_intruder() {
 
     if (std::abs(current_lat - base_lat) > 0.0449) vy *= -1.1;
     if (std::abs(current_lon - base_lon) > 0.0566) vx *= -1.1;
-    const double MIN_ALT = base_alt;   
+     const double MIN_ALT = base_alt;   
     const double MAX_ALT = 5000.0;     
 
     if (current_alt < MIN_ALT) {
@@ -87,7 +87,7 @@ void Intruder::update_and_publish_intruder() {
 }
 
 // [함수2: 데이터 브리핑]
-void Intruder::report_status() {
+void Ownship::report_status() {
     // UTM 좌표 재계산 (상수 재정의 피하기 위해 update_position에서 인자로 넘겨받도록 설계할 수도 있음)
     const double lat_const = 111319.9;
     const double lon_const = 111319.9 * std::cos(current_lat * M_PI / 180.0);
@@ -104,7 +104,7 @@ void Intruder::report_status() {
 }
 
 // [유틸리티 함수: 마커 생성]
-visualization_msgs::msg::Marker Intruder::createArrowMarker(double x, double y, double z, double yaw, double pitch, int id, double alpha) {
+visualization_msgs::msg::Marker Ownship::createArrowMarker(double x, double y, double z, double yaw, double pitch, int id, double alpha) {
     visualization_msgs::msg::Marker m;
     //마커 설정 로직(createArrowMarker 내용 동일)
     m.header.frame_id = "map"; m.header.stamp = this->now();
@@ -114,7 +114,7 @@ visualization_msgs::msg::Marker Intruder::createArrowMarker(double x, double y, 
     m.pose.orientation.x = q.x(); m.pose.orientation.y = q.y(); 
     m.pose.orientation.z = q.z(); m.pose.orientation.w = q.w();
     m.scale.x = 30.0; m.scale.y = 10.0; m.scale.z = 10.0;
-    m.color.r = 1.0, m.color.g = 0.0, m.color.b = 0.0; 
+    m.color.r = 0.0, m.color.g = 0.0, m.color.b = 1.0; 
     m.color.a = alpha;
     return m;
 }
