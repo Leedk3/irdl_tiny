@@ -7,7 +7,7 @@ using namespace std::placeholders;
 Radar::Radar(const rclcpp::NodeOptions & options) 
 : Node("radar_node", options), current_angle_(0.0) {
     
-    subscriber_ = this->create_publisher<sensor_msgs::msg::NavSatFix>(
+    subscriber_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
         "/intruder/gps", 10, std::bind(&Radar::intruder_callback, this, _1));
 
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/visualization_marker", 10);
@@ -97,33 +97,35 @@ void Radar::publish_scanning_beam() {
     }
     marker_pub_->publish(beam);
 
-    // 위에 [함수2]의 실행 결과 값을 [함수3]에 담아 놓음
+    // [함수3] 스캔이 진행되고 있는 영역 표시
     publish_visual_markers();
 
-    // 레이더 스캔 회전 로직
-    current_angle_ += (2.0 * M_PI / 20.0); 
+    // 레이더 스캔 회전 로직 360도 중첩 후 초기화 ([함수2] 1번 실행시 3도씩 중첩에서 영역을 바꿔나감)
+    current_angle_ += (2.0 * M_PI / 120.0); 
 
-    if (current_angle_ >= 2.0 * M_PI / 2.0) {
+    if (current_angle_ >= (2.0 * M_PI - 0.01)) {
         current_angle_ = 0.0;
-        accumulated_beam_points_.clear(); // 초기화
+        accumulated_beam_points_.clear(); 
+        cleanup_target_traces(); //오래된 궤적 한번에 삭제 
     }
 }
 
-//[함수3]
+//[함수3] 레이더 영역 및 intruder 감지 시 마커 표시
 void Radar::publish_visual_markers() {
-    // 1. 중첩되어 쌓이는 영역 (잔상 돔)
-    visualization_msgs::msg::Marker dome;
+
+    //중첩되어 쌓이는 영역 (잔상 돔)
+    visualization_msgs::msg::Marker dome; 
     dome.header.frame_id = "map";
     dome.header.stamp = this->now();
     dome.ns = "accumulated_view";
     dome.id = 20;
     dome.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
-    dome.color.a = 0.15; // 겹칠수록 진해짐
+    dome.color.a = 0.3; 
     dome.color.r = 0.0; dome.color.g = 0.3; dome.color.b = 0.6;
     dome.points = accumulated_beam_points_;
     marker_pub_->publish(dome);
 
-    // 2. 감지된 궤적 (10초 유지)
+    // 감지된 궤적 (10초 유지)
     visualization_msgs::msg::Marker trace;
     trace.header.frame_id = "map";
     trace.header.stamp = this->now();
@@ -131,12 +133,14 @@ void Radar::publish_visual_markers() {
     trace.id = 30;
     trace.type = visualization_msgs::msg::Marker::POINTS;
     trace.scale.x = 25.0; trace.scale.y = 25.0; 
-    trace.color.a = 1.0; trace.color.r = 1.0; trace.color.g = 1.0; trace.color.b = 0.0; // 노란색 점
+    trace.color.a = 1.0; 
+    trace.color.r = 1.0; trace.color.g = 1.0; trace.color.b = 0.0; // 노란색 점
 
     for (const auto& tt : target_traces_) trace.points.push_back(tt.point);
     marker_pub_->publish(trace);
 }
 
+//[함수4] intruder의 위치 정보 발행
 void Radar::publish_detection(double tx, double ty, double tz) {
     TargetTrace tt;
     tt.point.x = tx; tt.point.y = ty; tt.point.z = tz;
@@ -146,8 +150,9 @@ void Radar::publish_detection(double tx, double ty, double tz) {
     RCLCPP_WARN(this->get_logger(), "[TARGET SCAN] X: %.2f, Y: %.2f, Z: %.2f", tx, ty, tz);
 }
 
+//[함수5] intruder 감지 점 들 제거
 void Radar::cleanup_target_traces() {
     auto now = this->now();
     target_traces_.erase(std::remove_if(target_traces_.begin(), target_traces_.end(),
-        [&](const TargetTrace& tt) { return (now - tt.timestamp).seconds() > 10.0; }), target_traces_.end());
+        [&](const TargetTrace& tt) { return (now - tt.timestamp).seconds() > 10.0; }), target_traces_.end()); //10초 뒤에 점들 제거
 }

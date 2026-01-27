@@ -1,0 +1,10 @@
+1. Rviz에서 marker 생성 구성
+    visualization_msgs::msg::Marker trace; < Message instance(Rviz에서 그릴 시각화 데이터)
+    trace.header.frame_id = "map"; < Coordinate frame('map' = 레이더를 절대적 위치에서 표시)
+    trace.header.stamp = this->now(); < 실시간 정보를 가져옴
+    trace.ns = "detections"; < Marker identifier(마커의 이름)
+    trace.id = 30; < Marker identifier(마커의 고유 번호)
+    trace.type = visualization_msgs::msg::Marker::POINTS; < 시각화를 위한 마커는 포인트의 종류로 함 
+    trace.scale.x = 25.0; trace.scale.y = 25.0; < 마커의 x, y의 크기
+    trace.color.a = 1.0; < 투명도
+    trace.color.r = 1.0; trace.color.g = 1.0; trace.color.b = 0.0; < 마커의 색깔 RGB
