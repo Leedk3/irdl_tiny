@@ -12,7 +12,7 @@ Intruder::Intruder(const rclcpp::NodeOptions & options)
     this->declare_parameter("scale_y", 10.0);
     this->declare_parameter("scale_z", 10.0);
 
-    publisher_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/intruder/gps", 10);
+    publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/intruder/gps", 10);
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/intruder/marker", 10);
     
     // 타이머는 첫 번째 함수를 호출
@@ -58,15 +58,22 @@ void Intruder::update_and_publish_intruder() {
     marker_pub_->publish(createArrowMarker(utm_x, utm_y, current_alt, yaw, pitch, 0, 1.0));
 
     //gps값 발행
-    auto gps_msg = sensor_msgs::msg::NavSatFix();
-    gps_msg.header.frame_id = "gps_link";
-    gps_msg.header.stamp = this->now();
+    auto odom_msg = nav_msgs::msg::Odometry();
+    odom_msg.header.frame_id = "map"; // 좌표계 설정
+    odom_msg.header.stamp = this->now();
 
-    gps_msg.latitude = current_lat;
-    gps_msg.longitude = current_lon;
-    gps_msg.altitude = current_alt;
+    //위치 정보 입력 (UTM 좌표 사용)
+    odom_msg.pose.pose.position.x = utm_x;
+    odom_msg.pose.pose.position.y = utm_y;
+    odom_msg.pose.pose.position.z = current_alt;
 
-    publisher_->publish(gps_msg); 
+    //속도 정보 입력 (계산된 속도 벡터 사용)
+    odom_msg.twist.twist.linear.x = vx;
+    odom_msg.twist.twist.linear.y = vy;
+    odom_msg.twist.twist.linear.z = vz;
+
+    // 발행
+    publisher_->publish(odom_msg);
 
     // 함수2 호출 
     report_status();

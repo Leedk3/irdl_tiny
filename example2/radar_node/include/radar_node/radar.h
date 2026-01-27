@@ -2,7 +2,7 @@
 #define RADAR_H_
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/nav_sat_fix.hpp" 
+#include "nav_msgs/msg/odometry.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "geometry_msgs/msg/point_stamped.hpp"
 #include <vector>
@@ -21,7 +21,7 @@ public:
 
 private:
     // [함수1] intruder 위치 정보 구독
-    void intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg); 
+    void intruder_callback(const nav_msgs::msg::Odometry::SharedPtr msg); 
     
     // [함수2] radar 스캔 영역 가시화 (타이머 콜백)
     void publish_scanning_beam();
@@ -30,7 +30,7 @@ private:
     void publish_visual_markers();
     
     // [함수4] intruder의 위치 정보 관리 및 로그 출력
-    void publish_detection(double tx, double ty, double tz);
+    void publish_detection(double tx, double ty, double tz, double vx, double vy, double vz);
     
     // [함수5] 10초 지난 감지 점들 제거 
     void cleanup_target_traces();
@@ -41,7 +41,7 @@ private:
     static constexpr int MARKER_STAMP = 30;  // 감지된 타겟 궤적 ID
 
     // ROS 2 인터페이스 객체
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscriber_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscriber_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_; 
     rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr utm_pos_pub_;
     rclcpp::TimerBase::SharedPtr scan_timer_;
@@ -52,8 +52,9 @@ private:
     std::vector<TargetTrace> target_traces_; // 감지 궤적 저장소
 
     // 레이더 설정 상수
-    static constexpr double RADAR_RADIUS = 3000.0;
+    double latest_vx_ = 0.0, latest_vy_ = 0.0, latest_vz_ = 0.0;
     static constexpr double BASE_X = 0.0, BASE_Y = 0.0, BASE_Z = 0.0;
+    static constexpr double RADAR_RADIUS = 3000.0;
     static constexpr double base_lat = 37.5268303;
     static constexpr double base_lon = 126.9271195;
     static constexpr double base_alt = 10.0;

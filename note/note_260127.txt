@@ -8,3 +8,8 @@
     trace.scale.x = 25.0; trace.scale.y = 25.0; < 마커의 x, y의 크기
     trace.color.a = 1.0; < 투명도
     trace.color.r = 1.0; trace.color.g = 1.0; trace.color.b = 0.0; < 마커의 색깔 RGB
+
+2. 메세지를 담는 종류 
+    - sensor_msgs/msg/NavSatFix(GPS 담기 전문)
+    - geometry_msgs/msg/Twist(속도를 담기 전문)
+    - nav_msgs/msg/Odometry(위치와 속도를 담기 전문)

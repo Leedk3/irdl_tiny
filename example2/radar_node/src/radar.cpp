@@ -7,7 +7,7 @@ using namespace std::placeholders;
 Radar::Radar(const rclcpp::NodeOptions & options) 
 : Node("radar_node", options), current_angle_(0.0) {
     
-    subscriber_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+    subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/intruder/gps", 10, std::bind(&Radar::intruder_callback, this, _1));
 
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/visualization_marker", 10);
@@ -21,32 +21,42 @@ Radar::Radar(const rclcpp::NodeOptions & options)
 
 // [함수1] intruder 위치 정보 구독
 Radar::~Radar() {}
-void Radar::intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
+void Radar::intruder_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    // 1. 메시지에서 UTM 좌표 및 속도 추출
+    double tx = msg->pose.pose.position.x;
+    double ty = msg->pose.pose.position.y;
+    double tz = msg->pose.pose.position.z;
+
+    latest_vx_ = msg->twist.twist.linear.x;
+    latest_vy_ = msg->twist.twist.linear.y;
+    latest_vz_ = msg->twist.twist.linear.z;
+
+    // UTM -> GPS 역변환 로직
     const double lat_const = 111319.9;
     const double lon_const = 111319.9 * std::cos(base_lat * M_PI / 180.0);
 
-    //gps값 utm값으로 변환
-    double tx = (msg->longitude - base_lon) * lon_const;
-    double ty = (msg->latitude - base_lat) * lat_const;
-    double tz = msg->altitude - base_alt;
-    
+    // 나중에 사용할 수 있도록 위도, 경도 계산
+    double converted_lat = base_lat + (ty / lat_const);
+    double converted_lon = base_lon + (tx / lon_const);
+    double converted_alt = tz + base_alt;
+
+    // 레이더 원점 기준 상대 거리 계산 및 감지 로직
     double rel_x = tx - BASE_X;
     double rel_y = ty - BASE_Y;
     double rel_z = tz - BASE_Z;
     
     //intruder intruder간 거리 계산
-    double distance = std::sqrt(std::pow(rel_x, 2) + std::pow(rel_y, 2) + std::pow(rel_z, 2));
+    double distance = std::sqrt(rel_x*rel_x + rel_y*rel_y + rel_z*rel_z);
 
-    if (distance <= RADAR_RADIUS && rel_z >= 0) { // 거리가 반구 영역 안이면
-        double target_azimuth = std::atan2(rel_y, rel_x); //x,y 좌표값을 통해 각도값 계산
-        if (target_azimuth < 0) target_azimuth += 2.0 * M_PI; //arctan이 음수 값으로 가는거 방지
+    if (distance <= RADAR_RADIUS && rel_z >= 0) {
+        double target_azimuth = std::atan2(rel_y, rel_x);
+        if (target_azimuth < 0) target_azimuth += 2.0 * M_PI;
 
         double angle_diff = std::abs(target_azimuth - current_angle_);
         if (angle_diff > M_PI) angle_diff = 2.0 * M_PI - angle_diff;
 
-        // 세워진 원판(빔)의 두께 범위 내에 있으면 감지 180/18 = 10도 영역으로 회전  
         if (angle_diff < (M_PI/18)) { 
-            publish_detection(tx, ty, tz);
+            publish_detection(tx, ty, tz, latest_vx_, latest_vy_, latest_vz_);
         }
     }
 }
@@ -127,7 +137,7 @@ void Radar::publish_scanning_beam() {
             // 리셋된 상태(빈 데이터)를 즉시 RViz에 송신하여 잔상 제거
             publish_visual_markers();
     }
-}
+} 
 
 //[함수3] 레이더 영역 및 intruder 감지 시 마커 표시
 void Radar::publish_visual_markers() {
@@ -165,13 +175,42 @@ void Radar::publish_visual_markers() {
 }
 
 //[함수4] intruder의 위치 정보 발행
-void Radar::publish_detection(double tx, double ty, double tz) {
+void Radar::publish_detection(double tx, double ty, double tz, double vx, double vy, double vz) {
+    // 궤적 저장 (RViz 시각화용)
     TargetTrace tt;
     tt.point.x = tx; tt.point.y = ty; tt.point.z = tz;
     tt.timestamp = this->now();
     target_traces_.push_back(tt);
 
-    RCLCPP_INFO(this->get_logger(), "[FLIGHT LOCATION] X: %.2f, Y: %.2f, Z: %.2f", tx, ty, tz);
+    // 레이더 관측 물리량 계산
+    // 거리(Range) 계산
+    double range = std::sqrt(std::pow(tx - BASE_X, 2) + std::pow(ty - BASE_Y, 2) + std::pow(tz - BASE_Z, 2));
+    // 방위각(Azimuth) 계산 (Degree 단위)
+    double azimuth_deg = std::atan2(ty - BASE_Y, tx - BASE_X) * 180.0 / M_PI;
+    // 속도 크기(Speed) 계산
+    double speed = std::sqrt(vx*vx + vy*vy + vz*vz);
+
+    // 나중을 위한 GPS 역변환 계산
+    const double lat_const = 111319.9;
+    const double lon_const = 111319.9 * std::cos(base_lat * M_PI / 180.0);
+    double converted_lat = base_lat + (ty / lat_const);
+    double converted_lon = base_lon + (tx / lon_const);
+    double converted_alt = tz + base_alt;
+
+    // 터미널 출력 (데이터 브리핑)
+    RCLCPP_INFO(this->get_logger(), 
+        "\n================= [RADAR INFO] =================\n"
+        "  [GPS] Lat: %.7f, Lon: %.7f, Alt: %.3f\n"
+        "  [UTM] X: %.2f, Y: %.2f, Z: %.2f\n"
+        "  -----------------------------------------------\n"
+        "  - Range:    %.2f m\n"
+        "  - Azimuth:  %.2f deg\n"
+        "  - Velocity: [%.2f, %.2f, %.2f] (Speed: %.2f m/s)\n"
+        "===================================================", 
+        converted_lat, converted_lon, converted_alt,
+        tx, ty, tz,
+        range, azimuth_deg,
+        vx, vy, vz, speed);
 }
 
 //[함수5] intruder 감지 점 들 제거

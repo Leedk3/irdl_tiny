@@ -3,7 +3,7 @@
 
 #include <random>
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 class Intruder : public rclcpp::Node {
@@ -22,7 +22,7 @@ private:
     visualization_msgs::msg::Marker createArrowMarker(double x, double y, double z, double yaw, double pitch, int id, double alpha);
 
     // ROS2 인터페이스 및 변수들
-    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr publisher_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 
