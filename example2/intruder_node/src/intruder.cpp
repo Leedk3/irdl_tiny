@@ -40,6 +40,10 @@ void Intruder::update_and_publish_intruder() {
 
     if (std::abs(current_lat - base_lat) > 0.045) vy *= -1.1;
     if (std::abs(current_lon - base_lon) > 0.063) vx *= -1.1;
+    if (current_alt < base_alt) {
+        current_alt = base_alt;
+        vz *= -1.1;
+    }
 
     double utm_x = (current_lon - base_lon) * lon_const;
     double utm_y = (current_lat - base_lat) * lat_const;
@@ -52,6 +56,17 @@ void Intruder::update_and_publish_intruder() {
     marker_pub_->publish(createArrowMarker(utm_x, utm_y, current_alt, yaw, pitch, trail_id, 0.3));
     marker_id_cnt++;
     marker_pub_->publish(createArrowMarker(utm_x, utm_y, current_alt, yaw, pitch, 0, 1.0));
+
+    //gps값 발행
+    auto gps_msg = sensor_msgs::msg::NavSatFix();
+    gps_msg.header.frame_id = "gps_link";
+    gps_msg.header.stamp = this->now();
+
+    gps_msg.latitude = current_lat;
+    gps_msg.longitude = current_lon;
+    gps_msg.altitude = current_alt;
+
+    publisher_->publish(gps_msg); 
 
     // 함수2 호출 
     report_status();

@@ -35,6 +35,11 @@ private:
     // [함수5] 10초 지난 감지 점들 제거 
     void cleanup_target_traces();
 
+    //marker ID 배분
+    static constexpr int SCAN_HISTORY = 10;  // 실시간 스캔 빔 ID
+    static constexpr int STACK_RADAR  = 20;  // 누적된 돔 잔상 ID
+    static constexpr int MARKER_STAMP = 30;  // 감지된 타겟 궤적 ID
+
     // ROS 2 인터페이스 객체
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscriber_;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub_; 

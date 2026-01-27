@@ -15,7 +15,7 @@ Radar::Radar(const rclcpp::NodeOptions & options)
 
     // 1초당 스캔 영역 설정 (1초에 얼만큼 실행 할껀지 1000ms(1초)를 360번 실행)
     scan_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(1000/120), //1000/120 1초에 120번 실행 3도씩 회전 
+        std::chrono::milliseconds(1000/36), //1000/36 1초에 36번 실행 10도씩 회전 
         std::bind(&Radar::publish_scanning_beam, this));
 }
 
@@ -44,8 +44,8 @@ void Radar::intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) 
         double angle_diff = std::abs(target_azimuth - current_angle_);
         if (angle_diff > M_PI) angle_diff = 2.0 * M_PI - angle_diff;
 
-        // 세워진 원판(빔)의 두께 범위 내에 있으면 감지 180/60 = 3도 영역으로 회전  
-        if (angle_diff < (M_PI/60)) { 
+        // 세워진 원판(빔)의 두께 범위 내에 있으면 감지 180/18 = 10도 영역으로 회전  
+        if (angle_diff < (M_PI/18)) { 
             publish_detection(tx, ty, tz);
         }
     }
@@ -53,60 +53,79 @@ void Radar::intruder_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) 
 
 //[함수2] 레이더 스캔 영역을 시각화 
 void Radar::publish_scanning_beam() {
-    cleanup_target_traces();
     
     //레이더 스캔 영역을 담기 위한 토픽
     visualization_msgs::msg::Marker beam;
     beam.header.frame_id = "map";
     beam.header.stamp = this->now();
     beam.ns = "active_beam_plate";
-    beam.id = 10;
+    beam.id = SCAN_HISTORY;
     beam.type = visualization_msgs::msg::Marker::TRIANGLE_LIST; //삼각형의 형태로 1/4원을 그려냄 
     beam.action = visualization_msgs::msg::Marker::ADD; //이 정보를 새로 그리거나 이미 있으면 정보를 업데이트
+    
+    //마커의 기본 방향 및 크기
     beam.pose.orientation.w = 1.0;
     beam.scale.x = 1.0; beam.scale.y = 1.0; beam.scale.z = 1.0;
     
-    // 레이더 색깔 및 투명도 (밝은 하늘색)
+    // 레이더 색깔 및 투명도
     beam.color.r = 0.0; beam.color.g = 0.8; beam.color.b = 1.0;
-    beam.color.a = 0.5; 
+    beam.color.a = 0.1; 
     
     // z축 수직 1/4 원판 생성 (고도 0도 ~ 90도)
-    int segments = 30; 
-    for (int i = 0; i < segments; ++i) {
-        double el1 = (M_PI / 2.0) * i / segments;
-        double el2 = (M_PI / 2.0) * (i + 1) / segments;
+    int segments = 20;
+    double step = (2.0 * M_PI / 36.0); //스캔 영역 10도를 표시함
+    double next_angle = std::min(current_angle_ + step, 2.0 * M_PI); //10도 뒤의 다음점들 계산 및 최대 360을 안넘게 제한 
 
-        geometry_msgs::msg::Point p0, p1, p2;
+    //여기부터 3D 1/4 원형 조각 그리기 
+    for (int i = 0; i < segments; ++i) {  
+        double el1 = (M_PI / 2.0) * (double)i / segments; //첫번째 고도 점
+        double el2 = (M_PI / 2.0) * (double)(i + 1) / segments; //등분 점중 첫번쨰 다음 점
+
+        geometry_msgs::msg::Point p0, p1a, p2a, p1b, p2b; //0은 중심 a는 밑 원에서 첫번째 b 밑 원에서 10도 뒤의 점
         p0.x = BASE_X; p0.y = BASE_Y; p0.z = BASE_Z;
 
-        // 수직 원판의 정점들 (Azimuth는 current_angle_로 고정)
-        p1.x = BASE_X + RADAR_RADIUS * cos(el1) * cos(current_angle_);
-        p1.y = BASE_Y + RADAR_RADIUS * cos(el1) * sin(current_angle_);
-        p1.z = BASE_Z + RADAR_RADIUS * sin(el1);
+        // 현재 각도면 정점
+        p1a.x = BASE_X + RADAR_RADIUS * cos(el1) * cos(current_angle_);
+        p1a.y = BASE_Y + RADAR_RADIUS * cos(el1) * sin(current_angle_);
+        p1a.z = BASE_Z + RADAR_RADIUS * sin(el1);
+        p2a.x = BASE_X + RADAR_RADIUS * cos(el2) * cos(current_angle_);
+        p2a.y = BASE_Y + RADAR_RADIUS * cos(el2) * sin(current_angle_);
+        p2a.z = BASE_Z + RADAR_RADIUS * sin(el2);
 
-        p2.x = BASE_X + RADAR_RADIUS * cos(el2) * cos(current_angle_);
-        p2.y = BASE_Y + RADAR_RADIUS * cos(el2) * sin(current_angle_);
-        p2.z = BASE_Z + RADAR_RADIUS * sin(el2);
+        // 다음 각도면 정점 (10도 뒤)
+        p1b.x = BASE_X + RADAR_RADIUS * cos(el1) * cos(next_angle);
+        p1b.y = BASE_Y + RADAR_RADIUS * cos(el1) * sin(next_angle);
+        p1b.z = BASE_Z + RADAR_RADIUS * sin(el1);
+        p2b.x = BASE_X + RADAR_RADIUS * cos(el2) * cos(next_angle);
+        p2b.y = BASE_Y + RADAR_RADIUS * cos(el2) * sin(next_angle);
+        p2b.z = BASE_Z + RADAR_RADIUS * sin(el2);
 
-        beam.points.push_back(p0); beam.points.push_back(p1); beam.points.push_back(p2);
-        
-        // 잔상 데이터에 누적 (이것이 돔 형태를 만듦)
-        accumulated_beam_points_.push_back(p0);
-        accumulated_beam_points_.push_back(p1);
-        accumulated_beam_points_.push_back(p2);
+        // 정점 순서를 조절하여 렌더링 면을 올바르게 설정
+        auto add_tri = [&](auto a, auto b, auto c) {
+            beam.points.push_back(a); beam.points.push_back(b); beam.points.push_back(c);
+            accumulated_beam_points_.push_back(a); 
+            accumulated_beam_points_.push_back(b); 
+            accumulated_beam_points_.push_back(c);
+        };
+
+        add_tri(p0, p2a, p1a);  // 시작 벽면
+        add_tri(p0, p1b, p2b);  // 종료 벽면
+        add_tri(p1a, p2a, p2b); // 바깥 곡면 1
+        add_tri(p1a, p2b, p1b); // 바깥 곡면 2
     }
     marker_pub_->publish(beam);
-
-    // [함수3] 스캔이 진행되고 있는 영역 표시
     publish_visual_markers();
 
-    // 레이더 스캔 회전 로직 360도 중첩 후 초기화 ([함수2] 1번 실행시 3도씩 중첩에서 영역을 바꿔나감)
-    current_angle_ += (2.0 * M_PI / 120.0); 
+    // 회전 및 리셋 로직
+    current_angle_ += step;
 
     if (current_angle_ >= (2.0 * M_PI - 0.01)) {
-        current_angle_ = 0.0;
-        accumulated_beam_points_.clear(); 
-        cleanup_target_traces(); //오래된 궤적 한번에 삭제 
+            current_angle_ = 0.0;
+            accumulated_beam_points_.clear(); 
+            cleanup_target_traces(); // 궤적 정리
+            
+            // 리셋된 상태(빈 데이터)를 즉시 RViz에 송신하여 잔상 제거
+            publish_visual_markers();
     }
 }
 
@@ -118,19 +137,24 @@ void Radar::publish_visual_markers() {
     dome.header.frame_id = "map";
     dome.header.stamp = this->now();
     dome.ns = "accumulated_view";
-    dome.id = 20;
+    dome.id = STACK_RADAR;
     dome.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
-    dome.color.a = 0.3; 
+    
+    dome.scale.x = 1.0; 
+    dome.scale.y = 1.0; 
+    dome.scale.z = 1.0;
+    
+    dome.color.a = 0.1; 
     dome.color.r = 0.0; dome.color.g = 0.3; dome.color.b = 0.6;
     dome.points = accumulated_beam_points_;
     marker_pub_->publish(dome);
-
+    
     // 감지된 궤적 (10초 유지)
     visualization_msgs::msg::Marker trace;
     trace.header.frame_id = "map";
     trace.header.stamp = this->now();
     trace.ns = "detections";
-    trace.id = 30;
+    trace.id = MARKER_STAMP;
     trace.type = visualization_msgs::msg::Marker::POINTS;
     trace.scale.x = 25.0; trace.scale.y = 25.0; 
     trace.color.a = 1.0; 
@@ -147,12 +171,12 @@ void Radar::publish_detection(double tx, double ty, double tz) {
     tt.timestamp = this->now();
     target_traces_.push_back(tt);
 
-    RCLCPP_WARN(this->get_logger(), "[TARGET SCAN] X: %.2f, Y: %.2f, Z: %.2f", tx, ty, tz);
+    RCLCPP_INFO(this->get_logger(), "[FLIGHT LOCATION] X: %.2f, Y: %.2f, Z: %.2f", tx, ty, tz);
 }
 
 //[함수5] intruder 감지 점 들 제거
 void Radar::cleanup_target_traces() {
     auto now = this->now();
     target_traces_.erase(std::remove_if(target_traces_.begin(), target_traces_.end(),
-        [&](const TargetTrace& tt) { return (now - tt.timestamp).seconds() > 10.0; }), target_traces_.end()); //10초 뒤에 점들 제거
+        [&](const TargetTrace& tt) { return (now - tt.timestamp).seconds() > 60.0; }), target_traces_.end()); //60초 뒤에 점들 제거
 }
