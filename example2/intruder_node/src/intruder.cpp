@@ -45,11 +45,11 @@ void Intruder::update_and_publish_intruder() {
 
     if (current_alt < MIN_ALT) {
         current_alt = MIN_ALT;
-        vz *= -1.1; // 지면에 부딪히면 위로 튕김
+        vz *= -1.1;
     }
     else if (current_alt > MAX_ALT) {
         current_alt = MAX_ALT;
-        vz *= -1.1; // 천장에 부딪히면 아래로 튕김
+        vz *= -1.1; 
     }
 
     double utm_x = (current_lon - base_lon) * lon_const;
