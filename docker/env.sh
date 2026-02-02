@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-#
-# Copyright 2017 - 2018 Ternaris
-# SPDX-License-Identifier: Apache 2.0
 
 source "/opt/ros/$ROS_DISTRO/setup.bash"
-source "/etri_ws/install/setup.bash"
+source "/irdl_ws/install/setup.bash"
 # source "/opt/ACADOtoolkit/build/acado_env.sh"
-export PATH=$HOME/conda/bin:$HOME/conda/condabin:$PATH
+# export PATH=$HOME/conda/bin:$HOME/conda/condabin:$PATH
 
 for x in /opt/*; do
     if [[ -e "$x/.env.sh" ]]; then
@@ -14,7 +11,7 @@ for x in /opt/*; do
     fi
 done
 
-cd /etri_ws
+cd /irdl_ws
 
-echo 'AI3CT startup completed.'
+echo 'irdl-tutorial-image startup completed.'
 exec "$@"

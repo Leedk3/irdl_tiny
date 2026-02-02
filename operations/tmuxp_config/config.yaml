@@ -1,0 +1,21 @@
+session_name: irdl_tutorial
+windows: 
+  - window_name: Main_PC
+    layout: tiled
+    shell_command_before:
+      - source /opt/ros/humble/setup.bash
+      - cd /irdl_ws/src/irdl_tutorial
+    panes:
+    - shell_command:
+      - cd /bag && ros2 bag play rosbag_HYU250624_1/ --topics /scan_1 /scan_2 /imu/data
+    - shell_command:
+      - rviz2 -d /irdl_ws/src/irdl_tutorial/master/sensor_fusion.rviz
+    - shell_command:
+      - ros2 launch lidar_odometry_node deploy.launch.py
+    - shell_command:
+      - ros2 launch scan_preprocessor_node deploy.launch.py
+    - shell_command:
+      - ros2 launch map_loader_node deploy.launch.py
+    - shell_command:
+      - ros2 launch scan_matcher_node deploy.launch.py 
+      # - sleep 3 && ros2 launch lidar_odometry_node submap.launch.py

@@ -77,7 +77,7 @@ struct test
 
 
 
-root@ai3ct-macbook:/etri_ws# ros2 interface show sensor_msgs/msg/NavSatFix
+root@ai3ct-macbook:/irdl_ws# ros2 interface show sensor_msgs/msg/NavSatFix
 # Navigation Satellite fix for any Global Navigation Satellite System
 #
 # Specified using the WGS 84 reference ellipsoid

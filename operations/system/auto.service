@@ -1,0 +1,22 @@
+[Unit]
+RequiresMountsFor=/home
+After=network-online.target
+Description=autosystem
+
+[Service]
+Type=forking
+User=daegyu
+TimeoutStartSec=0
+RemainAfterExit=True
+Environment="ROS_MASTER_URI=http://192.168.0.212:11311"
+Environment="ROS_IP=192.168.0.212"
+ExecStart=/home/daegyu/scripts/autonomous_system_launch.sh
+#ExecStart=/usr/bin/xterm -hold -e /home/daegyu/scripts/autonomous_system_launch.sh
+#ExecStart=/usr/bin/tmux new-session -d 
+#ExecStop=/usr/bin/tmux send-keys 
+Restart=on-failure
+RestartSec=0
+
+[Install]
+WantedBy=graphical.target
+#WantedBy=multi-user.target
