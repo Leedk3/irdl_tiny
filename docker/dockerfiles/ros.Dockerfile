@@ -143,20 +143,20 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     && apt-get clean
 
 # Install VSCode
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common apt-transport-https wget iputils-ping && \
-    wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add - && \
-    add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" && \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y code
+# RUN apt-get update && \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common apt-transport-https wget iputils-ping && \
+#     wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add - && \
+#     add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" && \
+#     apt-get update && \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y code
 
 #geographic lib
-RUN cd /opt && \
-    wget http://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.52.tar.gz --no-check-certificate && \
-    tar xvzf GeographicLib-1.52.tar.gz && cd GeographicLib-1.52 && \
-    mkdir build && cd build && \
-    cmake ..&& \ 
-    make install -j8
+# RUN cd /opt && \
+#     wget http://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.52.tar.gz --no-check-certificate && \
+#     tar xvzf GeographicLib-1.52.tar.gz && cd GeographicLib-1.52 && \
+#     mkdir build && cd build && \
+#     cmake ..&& \ 
+#     make install -j8
 
 
 # Copy the requirements.txt file into the container
@@ -173,10 +173,10 @@ RUN cd /opt && \
 #         faiss-gpu 
 
 # pip install
-COPY requirements.txt /tmp
+#COPY requirements.txt /tmp
 # RUN . /opt/conda/etc/profile.d/conda.sh && conda activate base && \
 #     export PATH=/opt/conda/bin:/opt/conda/condabin:$PATH && \
-RUN cd /tmp && pip install --ignore-installed --no-cache-dir -r requirements.txt 
+#RUN cd /tmp && pip install --ignore-installed --no-cache-dir -r requirements.txt 
 
 # RUN . /opt/conda/etc/profile.d/conda.sh && conda activate base && \
 #     export PATH=/opt/conda/bin:/opt/conda/condabin:$PATH && \
@@ -200,27 +200,27 @@ ENV USER=${HOST_USERNAME}
 RUN useradd -u $UID -ms /bin/bash $USER | echo $USER
 
 # RUN useradd -ms /bin/bash usrg
-COPY . /etri_ws/src/AI3CT
-RUN mkdir /etri_ws/build
+#COPY . /etri_ws/src/AI3CT
+#RUN mkdir /etri_ws/build
 #RUN mkdir /etri_ws/devel
-RUN mkdir /etri_ws/install
-RUN mkdir /etri_ws/map
+#RUN mkdir /etri_ws/install
+#RUN mkdir /etri_ws/map
 
-RUN chown -R ${USER}:${USER} /etri_ws
-RUN chmod 755 /etri_ws
+#RUN chown -R ${USER}:${USER} /etri_ws
+#RUN chmod 755 /etri_ws
 
 #entri env
-COPY docker/env.sh /tmp/etri_env.sh
-RUN ["chmod", "+x", "/tmp/etri_env.sh"]
-CMD . /tmp/etri_env.sh
+#COPY docker/env.sh /tmp/etri_env.sh
+#RUN ["chmod", "+x", "/tmp/etri_env.sh"]
+#CMD . /tmp/etri_env.sh
 
 # SUDOERS settings
 RUN echo 'ALL ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN echo 'Defaults env_keep += "DEBUG ROS_DISTRO"' >> /etc/sudoers
 
 # bashrc setting finalize
-RUN echo 'source "/opt/ros/$ROS_DISTRO/setup.bash"' >> /home/$USER/.bashrc
-RUN echo 'source "/etri_ws/install/setup.bash"' >> /home/$USER/.bashrc
+#RUN echo 'source "/opt/ros/$ROS_DISTRO/setup.bash"' >> /home/$USER/.bashrc
+#RUN echo 'source "/etri_ws/install/setup.bash"' >> /home/$USER/.bashrc
 
 
 # RUN echo 'alias auto_enable="rosservice call /autonomous_trigger \"data: true\""' >> /home/$USER/.bashrc
@@ -235,14 +235,14 @@ RUN echo 'source "/etri_ws/install/setup.bash"' >> /home/$USER/.bashrc
 # COPY docker/entrypoint.sh /var/tmp
 # CMD bash -E /var/tmp/entrypoint.sh && /bin/bash
 
-ENV PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+#ENV PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
 
 
 #GIT config
-RUN cd /etri_ws && echo $GH_TOKEN > .secret.github
+#RUN cd /etri_ws && echo $GH_TOKEN > .secret.github
 
-WORKDIR /etri_ws
+#WORKDIR /etri_ws
 
-COPY docker/env.sh /env.sh
-RUN chmod +x /env.sh
-ENTRYPOINT ["/env.sh"]
+# COPY docker/env.sh /env.sh
+# RUN chmod +x /env.sh
+# ENTRYPOINT ["/env.sh"]

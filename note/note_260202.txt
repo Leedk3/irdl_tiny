@@ -1,0 +1,55 @@
+1. Readme보고 run docker가 실행되게 만들기
+2. udp communication node 설치
+/우선
+3. udp 통신 공부
+4. udp 통신 고정 ip 하나씩 할당
+    -  structure ??
+
+5. ROS2 custom message 정의, 패키지 생성 어떻게 하는지
+
+    struct univ
+    {
+        int established_year;
+        int president_name;
+    }
+
+
+    univ JBNU;
+    JBNU.established_year = 1945;
+
+    univ KAIST;
+    KAIST.established_year = 1960;
+
+
+std_msgs, geometry_msgs, nav_msgs, visualization_msgs,...
++ IRDL_msgs, msfs_msgs, 
+
+
+
+
+Class_name
+{
+    public id
+
+    private pwd
+
+    void solve_prob;
+}
+
+void Class_name::solve_prob
+{
+    function(pwd); // 
+}
+
+============================
+#include "Class_name.h"
+
+auto object_name = make_shared<Class_name>
+print(object_name.id)
+print(object_name.pwd) // error, private
+
+class vs object concept
+    - 은닉성
+    - 등등 여러 컨셉
+
+image vs container concept
