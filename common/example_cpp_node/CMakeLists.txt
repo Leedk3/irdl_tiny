@@ -15,10 +15,7 @@ find_package(ament_cmake_auto REQUIRED)
 # find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 ament_auto_find_build_dependencies()
 
-# set(OpenCV_DIR "/tmp/OpenCV/opencv-4.10.0")
-# set(CUDA_DIR "/usr/local/cuda")
-
-find_package(OpenCV 4 REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 
 include_directories(
@@ -38,8 +35,8 @@ ament_auto_add_library(example_cpp SHARED
 
 target_link_libraries(example_cpp
     ${OpenCV_LIBS}
-    Boost::system
-    Boost::filesystem
+    boost_system
+    boost_filesystem
 )
  
 # Executable

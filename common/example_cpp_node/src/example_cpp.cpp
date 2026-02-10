@@ -1,4 +1,4 @@
-#include <example_cpp/example_cpp.h>
+#include <example_cpp_node/example_cpp.h>
 #include <chrono>
 
 using namespace std::chrono_literals;
@@ -10,7 +10,7 @@ ExampleCPP::ExampleCPP(const std::string& node_name) : Node(node_name)
   this->pubUAMmodel = this->create_publisher<visualization_msgs::msg::Marker>("/uam_model", rclcpp::SensorDataQoS());
 
   this->subOdom = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/Odometry/msfs", rclcpp::SensorDataQoS(), std::bind(&ExampleCPP::odomCallback, this, std::placeholders::_1));
+      "/Odometry/simple_flight", rclcpp::SensorDataQoS(), std::bind(&ExampleCPP::odomCallback, this, std::placeholders::_1));
 
   getParams();
 };
