@@ -1,0 +1,31 @@
+[0.010s] Invoking command in '/home/kimseongmin/irdl_ws/src/irdl_tutorial/playground/build/gps_to_utm_node': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/kimseongmin/irdl_ws/src/irdl_tutorial/playground/example/gps_to_utm_node -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/kimseongmin/irdl_ws/src/irdl_tutorial/playground/install/gps_to_utm_node
+[0.076s] -- The C compiler identification is GNU 13.3.0
+[0.123s] -- The CXX compiler identification is GNU 13.3.0
+[0.135s] -- Detecting C compiler ABI info
+[0.190s] -- Detecting C compiler ABI info - done
+[0.195s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.196s] -- Detecting C compile features
+[0.196s] -- Detecting C compile features - done
+[0.202s] -- Detecting CXX compiler ABI info
+[0.283s] -- Detecting CXX compiler ABI info - done
+[0.294s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.294s] -- Detecting CXX compile features
+[0.294s] -- Detecting CXX compile features - done
+[0.299s] -- Configuring incomplete, errors occurred!
+[0.299s] [31mCMake Error at CMakeLists.txt:8 (find_package):
+[0.299s]   By not providing "Findament_cmake_auto.cmake" in CMAKE_MODULE_PATH this
+[0.299s]   project has asked CMake to find a package configuration file provided by
+[0.299s]   "ament_cmake_auto", but CMake did not find one.
+[0.299s] 
+[0.299s]   Could not find a package configuration file provided by "ament_cmake_auto"
+[0.299s]   with any of the following names:
+[0.299s] 
+[0.299s]     ament_cmake_autoConfig.cmake
+[0.299s]     ament_cmake_auto-config.cmake
+[0.299s] 
+[0.299s]   Add the installation prefix of "ament_cmake_auto" to CMAKE_PREFIX_PATH or
+[0.299s]   set "ament_cmake_auto_DIR" to a directory containing one of the above
+[0.300s]   files.  If "ament_cmake_auto" provides a separate development package or
+[0.300s]   SDK, be sure it has been installed.
+[0.300s] 
+[0.300s] [0m
