@@ -1,21 +1,45 @@
-session_name: irdl_tutorial
+session_name: AAM_AUTONOMOUS
 windows: 
-  - window_name: Main_PC
+  - window_name: CONTROL
     layout: tiled
     shell_command_before:
-      - source /opt/ros/humble/setup.bash
       - cd /irdl_ws/src/irdl_tutorial
     panes:
     - shell_command:
-      - cd /bag && ros2 bag play rosbag_HYU250624_1/ --topics /scan_1 /scan_2 /imu/data
+      - ros2 run joy_linux joy_linux_node
     - shell_command:
-      - rviz2 -d /irdl_ws/src/irdl_tutorial/master/sensor_fusion.rviz
+      - ros2 launch aam_controller_node deploy.launch.py
     - shell_command:
-      - ros2 launch lidar_odometry_node deploy.launch.py
+      - ros2 launch udp_communication_node deploy.launch.py
     - shell_command:
-      - ros2 launch scan_preprocessor_node deploy.launch.py
+      - cd master && ros2 run rviz2 rviz2 -d seoul.rviz
     - shell_command:
-      - ros2 launch map_loader_node deploy.launch.py
+      - ros2 launch uam_route_planner deploy.launch.py
     - shell_command:
-      - ros2 launch scan_matcher_node deploy.launch.py 
-      # - sleep 3 && ros2 launch lidar_odometry_node submap.launch.py
+      - ros2 launch local_planner_node deploy.launch.py
+    - shell_command:
+      - ros2 launch geodetic_converter deploy.launch.py
+    - shell_command:
+      - ros2 launch pseudo_camera_node deploy.launch.py
+    - shell_command:
+      - echo "Shell Command"
+
+  - window_name: PERCEPTION
+    layout: tiled
+    shell_command_before:
+      - cd /irdl_ws/src/irdl_tutorial
+    panes:
+    - shell_command:
+      - ros2 launch mjpeg_to_ros_node deploy.launch.py
+    - shell_command:
+      - #rqt
+
+  - window_name: Flight_Status
+    layout: tiled
+    shell_command_before:
+      - cd /irdl_ws/src/irdl_tutorial
+    panes:
+    - shell_command:
+      - ros2 topic echo /flight_state
+    - shell_command:
+      - ros2 topic echo /switch_state

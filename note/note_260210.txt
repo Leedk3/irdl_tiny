@@ -2,3 +2,54 @@
     - shift + tap: 들여쓰기 지우기 
     - art + 위아래 버튼: 커서 있는 부분이 있는 줄 이동 
     - cntl + /: 주석 처리
+
+
+
+2. Autoware DDS setup
+ https://autowarefoundation.github.io/autoware-documentation/main/installation/additional-settings-for-developers/network-configuration/dds-settings/#tune-dds-settings
+
+ HOST PC
+    $ sudo nano /etc/sysctl.d/10-cyclone-max.conf
+    """
+    # Increase the maximum receive buffer size for network packets
+    net.core.rmem_max=2147483647  # 2 GiB, default is 208 KiB
+
+    # IP fragmentation settings
+    net.ipv4.ipfrag_time=3  # in seconds, default is 30 s
+    net.ipv4.ipfrag_high_thresh=134217728  # 128 MiB, default is 256 KiB
+    """
+
+    Update system control via
+    (Update system control parameters)
+    $ sudo sysctl --system
+
+CYCLONE DDS setup
+gedit /irdl_ws/src/irdl_tutorial/.cyclonedds.xml
+
+
+"""
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+  <Domain Id="any">
+    <General>
+      <Interfaces>
+        <NetworkInterface autodetermine="false" name="${DDS_INTERFACE}" priority="default" multicast="default" />
+      </Interfaces>
+      <AllowMulticast>default</AllowMulticast>
+      <MaxMessageSize>65500B</MaxMessageSize>
+    </General>
+    <Internal>
+      <SocketReceiveBufferSize min="10MB"/>
+      <Watermarks>
+        <WhcHigh>500kB</WhcHigh>
+      </Watermarks>
+    </Internal>
+  </Domain>
+</CycloneDDS>
+
+"""
+
+
+
+
+
