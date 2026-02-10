@@ -1,0 +1,16 @@
+canvas {
+    fill-color: #0000f;
+    text-color: #ffffff;
+    error-color: #ffffff;
+}
+
+node[!imu_rot_y],
+node[imu_rot_y != 0] {
+    symbol-shape: square;
+    symbol-stroke-width: 1.0;
+    symbol-fill-color: #00ff00;
+    symbol-stroke-color: #ffffff;
+    text: eval(tag("imu_rot_y"));
+    font-size: 12;
+    text-offset: 5;
+}

@@ -1,0 +1,16 @@
+canvas {
+    fill-color: #0000f;
+    text-color: #ffffff;
+    error-color: #ffffff;
+}
+
+node[!speed],
+node[speed != 0] {
+    symbol-shape: square;
+    symbol-stroke-width:1.0;
+    symbol-fill-color: #0000ff;
+    symbol-stroke-color: #00ffff;
+    text: eval(tag("speed"));
+    font-size: 25;
+    text-offset: 5;
+}

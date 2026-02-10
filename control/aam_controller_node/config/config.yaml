@@ -1,0 +1,92 @@
+/**:
+  ros__parameters:
+    #speed
+    hover.pid_speed.kp : 2.0
+    hover.pid_speed.ki : 0.5
+    hover.pid_speed.kd : 0.6
+
+    # altitude
+    hover.pid_altitude.kp : 0.3
+    hover.pid_altitude.ki : 0.001
+    hover.pid_altitude.kd : 0.000001
+    
+    # x-y plane
+    hover.pid_x.kp : 0.5
+    hover.pid_x.ki : 0.0
+    hover.pid_x.kd : 0.05
+    hover.pid_y.kp : 0.02
+    hover.pid_y.ki : 0.0
+    hover.pid_y.kd : 0.00001
+
+    # heading(yaw)
+    hover.pid_heading.kp : 1.0
+    hover.pid_heading.ki : 0.0
+    hover.pid_heading.kd : 0.0
+
+    #speed
+    flight.pid_speed.kp : 1.0
+    flight.pid_speed.ki : 0.1
+    flight.pid_speed.kd : 0.4
+
+    # altitude
+    flight.pid_altitude.kp : 0.005
+    flight.pid_altitude.ki : 0.001
+    flight.pid_altitude.kd : 0.00025
+
+    # pitch
+    flight.pid_pitch.kp : 1.2
+    flight.pid_pitch.ki : 0.1
+    flight.pid_pitch.kd : 0.2
+
+    # lateral error
+    flight.pid_y.kp : 0.0035
+    flight.pid_y.ki : 0.0000
+    flight.pid_y.kd : 0.00025
+
+    # roll
+    flight.pid_roll.kp : 1.2
+    flight.pid_roll.ki : 0.0
+    flight.pid_roll.kd : 0.2
+
+    # heading(yaw)
+    flight.pid_heading.kp : 1.0
+    flight.pid_heading.ki : 0.0
+    flight.pid_heading.kd : 0.0
+
+    # flight.pid_x.kp : 0.5
+    # flight.pid_x.ki : 0.0
+    # flight.pid_x.kd : 0.02
+
+
+    # control point
+    look_ahead_idx : 50 
+    ref_control_dist : 10.0
+
+
+    # hovering max speed mps --> Hover phase/translational rate control
+    hover_max_speed : 10.0
+
+    # hovering mode to flight mode transient speed mps --> 
+    hover_to_flight_speed : 15.0
+
+    # flight max speed mps --> fixed wing mode
+    flight_max_speed : 40.0
+
+    # # hovering max speed mps --> Hover phase/translational rate control
+    # hover_max_speed : 20.0
+
+    # # hovering mode to flight mode transient speed mps --> 
+    # hover_to_flight_speed : 25.0
+
+    # # flight max speed mps --> fixed wing mode
+    # flight_max_speed : 40.0
+
+    throttle_low_pass_filter_alpha : 0.4
+    flight_pitch_low_pass_filter_alpha : 0.25
+
+    #mode swtich
+    stable_time_thres : 3.0
+    mode_switch_z_thres : 1.0
+    mode_switch_speed_thres : 6.0 #mps 
+    mode_switch_lat_thres : 10.0 
+    hover_mode_switch_dist_thres : 50.0

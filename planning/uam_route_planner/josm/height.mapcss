@@ -1,0 +1,16 @@
+canvas {
+    fill-color: #0000f;
+    text-color: #ffffff;
+    error-color: #ffffff;
+}
+
+node[!height],
+node[height != 0] {
+    symbol-shape: square;
+    symbol-stroke-width:1.0;
+    symbol-fill-color: #ff00ff;
+    symbol-stroke-color: #ffffff;
+    text: eval(tag("height"));
+    font-size: 20;
+    text-offset: 5;
+}

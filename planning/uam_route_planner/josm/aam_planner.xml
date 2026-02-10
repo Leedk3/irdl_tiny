@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<presets xmlns="http://josm.openstreetmap.de/tagging-preset-1.0" author="DaegyuLee" version="1.0" shortdescription="ETRI AAM route planning presets file" description="JOSM based route planning system">
+<group name="ETRI AAM">
+    <group name="Node">
+        <item name="set_node_info" type="node">
+            <label text="Node Info"/>
+            <label text="---------------------------"/>
+            <text key="speed" text="Velocity profile[km/h]" default="5" delete_if_empty="true"/>
+            <text key="yaw" text="Heading[deg]" default="0" delete_if_empty="true"/>
+            <!-- <text key="alt" text="Altitude[m]" default="0" delete_if_empty="true"/> -->
+            <text key="mission" text="MissionNumber" default="0" delete_if_empty="true"/>
+            <text key="risky_area" text="RiskyAreaNumber" default="0" delete_if_empty="true"/>
+            <text key="vel_profile_gain" text="Velocity profile gain" default="1.0" delete_if_empty="true"/>
+            <text key="height" text="Height[m]" default="0" delete_if_empty="true"/>
+            <text key="ready_to_landing" text="Flight to hovering mode" default="0" delete_if_empty="true"/>
+            <label text="---------------------------"/>
+        </item>
+    </group>
+
+</group>
+</presets>

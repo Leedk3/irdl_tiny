@@ -1,0 +1,30 @@
+canvas {
+    fill-color: #0000f;
+    text-color: #ffffff;
+    error-color: #ffffff;
+}
+
+node[!speed],
+node[speed < 0] {
+    symbol-shape: square;
+    symbol-stroke-width: 1.0;
+    symbol-fill-color: red;
+    symbol-stroke-color: #ffffff;
+}
+
+node[speed = 0] {
+    symbol-shape: square;
+    symbol-stroke-width: 1.0;
+    symbol-fill-color: blue;
+    symbol-stroke-color: #ffffff;
+}
+
+node[speed > 0] {
+    symbol-shape: square;
+    symbol-stroke-width: 1.0;
+    symbol-fill-color: #11ff22;
+    symbol-stroke-color: #ffffff;
+    text: eval(tag("speed") * tag("vel_profile_gain") * 3.6);
+    font-size: 12;
+    text-offset: 5;
+}
