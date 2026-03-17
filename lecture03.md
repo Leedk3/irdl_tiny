@@ -52,7 +52,7 @@ style: |
 
 # `Week 3: Dev Environment & ROS2 Communication`
 
-## Docker Setup · Publisher · Subscriber · RViz2
+## Docker Setup · Publisher · Subscriber · RViz2 Visualization
 
 **Department of Advanced Defense Technology and Industry**
 
@@ -65,9 +65,10 @@ style: |
 - **Docker:** Understand why we use containers and how to build/run one.
 - **Publisher (talker_node):** Write a node that broadcasts messages on a topic.
 - **Subscriber (listener_node):** Write a node that receives and reacts to messages.
-- **RViz2 (rviz_marker_node):** Visualize robot world objects in 3D using markers.
+- **RViz2 (rviz_marker_node):** Visualize objects in 3D using markers.
+- **AD Visualization (ad_viz_node):** Simulate a self-driving vehicle with obstacle awareness.
 
-> **Goal:** By the end of class, you will have a blue sphere orbiting an orange cylinder on your screen — driven entirely by code you understand.
+> **Goal:** By the end of class, you will see a vehicle navigating a circular path with color-coded obstacle alerts — driven entirely by ROS2 nodes you understand.
 
 ---
 
@@ -182,8 +183,8 @@ docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
 
 ```bash
 # Create workspace and clone
-mkdir -p /home/${USER}/ros_ws/src
-cd /home/${USER}/ros_ws/src
+mkdir -p ~/ros_ws/src
+cd ~/ros_ws/src
 git clone --recursive https://github.com/Leedk3/irdl_tiny.git
 cd irdl_tiny && git checkout main
 
@@ -222,6 +223,28 @@ irdl_enter   # enter the container
 
 Inside the container, your workspace is `/ros_ws`.
 The host directory `~/ros_ws` is **mounted** — edits on either side are instantly visible.
+
+---
+
+# `8-A. Mac-Specific Docker Notes`
+
+## Known issues and fixes on Apple Silicon
+
+| Issue | Cause | Fix |
+| --- | --- | --- |
+| `mkdir /home/user: not supported` | Mac home is `/Users/`, not `/home/` | `run_mac.sh` uses `${HOME}` |
+| `Mounts denied: /home/...` | Docker Desktop only shares `/Users` | Fixed by using `${HOME}/ros_ws/bag` |
+| `/bin/zsh: not found` | Container has no zsh | `run_mac.sh` uses `/bin/bash` |
+| `I have no name!` | Mac `/etc/passwd` has no container user | Removed `/etc/passwd` bind-mount |
+
+**Build the image on your Mac** so the container user matches your username:
+
+```bash
+cd ~/ros_ws/src/irdl_tiny/docker
+./build_docker.sh mac
+```
+
+> Always rebuild the image after pulling updates to `run_mac.sh` or Dockerfiles.
 
 ---
 
@@ -298,8 +321,8 @@ Each timer tick:
 ```cpp
 void Talker::timerCallback() {
   std_msgs::msg::String msg;
-  msg.data = "Hello, ROS2! count = " + std::to_string(count_++);
-  pub_->publish(msg);
+  msg.data = m_message + " [" + std::to_string(m_count++) + "]";
+  pubChatter->publish(msg);
   RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", msg.data.c_str());
 }
 ```
@@ -317,14 +340,14 @@ void Talker::timerCallback() {
 ```yaml
 /**:
   ros__parameters:
-    publish_rate: 1.0   # Hz — change this to speed up or slow down
+    message: "Hello, ROS2!"   # change this string without recompiling
 ```
 
 Declaring and reading in C++:
 
 ```cpp
-this->declare_parameter<double>("publish_rate", 1.0);
-publish_rate_ = this->get_parameter("publish_rate").as_double();
+this->declare_parameter<std::string>("message", "Hello, ROS2!");
+m_message = this->get_parameter("message").as_string();
 ```
 
 Running:
@@ -346,15 +369,15 @@ ros2 launch talker_node deploy.launch.py
 // Create subscription: topic, queue depth, callback
 sub_ = this->create_subscription<std_msgs::msg::String>(
   "/chatter", 10,
-  std::bind(&Listener::msgCallback, this, std::placeholders::_1));
+  std::bind(&Listener::chatterCallback, this, std::placeholders::_1));
 ```
 
 Callback — called automatically when a message arrives:
 
 ```cpp
-void Listener::msgCallback(const std_msgs::msg::String::SharedPtr msg)
+void Listener::chatterCallback(const std_msgs::msg::String::SharedPtr msg)
 {
-  RCLCPP_INFO(this->get_logger(), "Received: '%s'", msg->data.c_str());
+  RCLCPP_INFO(this->get_logger(), "Heard: '%s'", msg->data.c_str());
 }
 ```
 
@@ -383,9 +406,9 @@ ros2 launch listener_node deploy.launch.py
 Expected output in Terminal 2:
 
 ```text
-[listener_node]: Received: 'Hello, ROS2! count = 0'
-[listener_node]: Received: 'Hello, ROS2! count = 1'
-[listener_node]: Received: 'Hello, ROS2! count = 2'
+[listener_node]: Heard: 'Hello, ROS2! [0]'
+[listener_node]: Heard: 'Hello, ROS2! [1]'
+[listener_node]: Heard: 'Hello, ROS2! [2]'
 ```
 
 **Inspect the topic (Terminal 3):**
@@ -398,27 +421,30 @@ ros2 topic hz   /chatter  # measures actual publish rate
 
 ---
 
-# `15. Visualizing the Node Graph`
+# `15. Build Workflow`
 
-## rqt_graph — seeing who talks to whom
+## Compile and activate packages
 
 ```bash
-rqt_graph
+# Inside the container
+cd /ros_ws/src/irdl_tiny
+./build.sh
 ```
 
-You will see:
+`build.sh` runs `colcon build` with the correct flags. After every build, **source the install directory** in your current shell:
 
-```text
-  [/talker_node]  ──/chatter──►  [/listener_node]
+```bash
+source /ros_ws/install/setup.bash
 ```
 
-This graph updates live as nodes start and stop. It is the fastest way to debug:
+> ⚠ Without sourcing, `ros2 run <package>` tab-completion won't find new packages.
+> The build script runs in a subshell — its `source` does not affect your shell.
 
-- Is my publisher actually running?
-- Is the subscriber on the right topic name?
-- Are there unexpected extra publishers?
+Convenience alias (add to `~/.bashrc`):
 
-> **Common bug:** Topic name typo — publisher on `/Chatter`, subscriber on `/chatter`. `rqt_graph` reveals this instantly.
+```bash
+alias cb='cd /ros_ws/src/irdl_tiny && ./build.sh && source /ros_ws/install/setup.bash'
+```
 
 ---
 
@@ -432,74 +458,47 @@ This graph updates live as nodes start and stop. It is the fastest way to debug:
 | --- | --- | --- |
 | Marker / MarkerArray | `visualization_msgs` | Custom 3D shapes |
 | PointCloud2 | `sensor_msgs` | LiDAR point clouds |
-| Odometry | `nav_msgs` | Robot pose + path |
-| Image | `sensor_msgs` | Camera feed |
+| Path | `nav_msgs` | Planned route |
 | TF | — | Coordinate frame tree |
 
 **How it works:**
 
-1. A node **publishes** a `MarkerArray` message.
-2. RViz2 **subscribes** to that topic and draws the markers in 3D space.
+1. A node **publishes** a `Marker` or `MarkerArray` message.
+2. RViz2 **subscribes** to that topic and draws the shapes in 3D space.
 3. You choose a **Fixed Frame** — all positions are relative to this frame.
 
 ---
 
-# `17. rviz_marker_node — What it Publishes`
+# `17. rviz_marker_node — Basic Marker`
 
-## Two objects: an orbiting sphere and a static cylinder
+## Publishing a single 3D cube at the origin
 
-```text
-           ↑ z
-           |
-           |   ● (blue sphere, orbits at radius 2 m)
-           |  /
-           | /  angle increases over time
-           |/___________► x
-        🔶 (orange cylinder at origin)
-```
-
-- Published on topic: `/visualization_marker_array`
-- Frame: `map`
-- Rate: 20 Hz
-
-**Objects:**
-
-- **Sphere** (`SPHERE` type) — position updates every tick based on `angle_`
-- **Cylinder** (`CYLINDER` type) — position fixed at `(0, 0, 0.25)`
-
----
-
-# `18. rviz_marker_node — Key Code`
-
-## How the orbit position is computed each tick
+**What it does:** Publishes a `visualization_msgs/Marker` (blue cube) on `/visualization_marker` at 10 Hz.
 
 ```cpp
-void RvizMarker::timerCallback()
-{
-  // Advance angle: full circle (2π) divided over orbit_period seconds
-  angle_ += (2.0 * M_PI / orbit_period_) / publish_rate_;
-  if (angle_ >= 2.0 * M_PI) angle_ -= 2.0 * M_PI;
+visualization_msgs::msg::Marker marker;
+marker.header.frame_id = m_frame_id;   // "map"
+marker.type   = visualization_msgs::msg::Marker::CUBE;
+marker.action = visualization_msgs::msg::Marker::ADD;
+marker.scale.x = m_scale;   // 1.0 m
+marker.scale.y = m_scale;
+marker.scale.z = m_scale;
+marker.color.r = 0.0;  marker.color.g = 0.5;
+marker.color.b = 1.0;  marker.color.a = 1.0;  // blue
+```
 
-  visualization_msgs::msg::MarkerArray array;
-  array.markers.push_back(makeOrbitSphere(angle_));
-  array.markers.push_back(makeOriginCylinder());
-  pub_->publish(array);
-}
+`config/config.yaml`:
 
-visualization_msgs::msg::Marker RvizMarker::makeOrbitSphere(double angle)
-{
-  // Parametric circle: x = r·cos(θ),  y = r·sin(θ)
-  marker.pose.position.x = orbit_radius_ * std::cos(angle);
-  marker.pose.position.y = orbit_radius_ * std::sin(angle);
-  marker.pose.position.z = 0.5;
-  marker.type = visualization_msgs::msg::Marker::SPHERE;
-  // color: blue  (r=0.2, g=0.6, b=1.0, a=1.0)
-}
+```yaml
+/**:
+  ros__parameters:
+    frame_id: "map"
+    scale: 1.0
 ```
 
 ---
 
-# `19. Running rviz_marker_node`
+# `18. Running rviz_marker_node`
 
 ## Step-by-step demo
 
@@ -519,69 +518,148 @@ rviz2   # in another terminal inside the container
 **Step 3 — Configure RViz2:**
 
 1. **Global Options → Fixed Frame:** type `map`
-2. Click **Add** (bottom-left) → **By topic** → `/visualization_marker_array` → **MarkerArray** → OK
+2. Click **Add** → **By topic** → `/visualization_marker` → **Marker** → OK
 
-You should now see the orange cylinder at the origin and the blue sphere orbiting around it.
+You should see a blue cube at the origin.
 
-> **Mac users:** Run `xhost +localhost` in a Mac terminal before starting the container.
+> **Mac users:** Run `xhost +localhost` on the Mac host before starting RViz2.
+> If RViz2 fails to open, set `LIBGL_ALWAYS_SOFTWARE=1` inside the container.
 
 ---
 
-# `20. rviz_marker_node — Parameters`
+# `19. ad_viz_node — Autonomous Driving Visualization`
 
-## Tuning the visualization without changing code
+## Simulating a vehicle navigating with obstacle awareness
+
+**Published topics:**
+
+| Topic | Type | Content |
+| --- | --- | --- |
+| `/ad/vehicle` | `Marker` | Yellow arrow showing vehicle pose |
+| `/ad/global_path` | `Path` | Pre-planned circular route |
+| `/ad/safety_circle` | `Marker` | Transparent caution radius |
+| `/ad/obstacles` | `MarkerArray` | Obstacles + distance labels |
+| TF `map→base_link` | — | Live coordinate frame |
+
+**Obstacle color logic (distance to vehicle):**
+
+| Color | Distance | Meaning |
+| --- | --- | --- |
+| 🟢 Green | > 6 m | Safe |
+| 🟡 Yellow | 3 – 6 m | Caution |
+| 🔴 Red | < 3 m | Danger |
+
+---
+
+# `20. ad_viz_node — Key Code`
+
+## Vehicle motion and obstacle coloring
+
+```cpp
+void AdViz::timerCallback()
+{
+  m_t += m_speed;                          // advance angle each tick
+  double vx  = m_radius * std::cos(m_t);  // x = r·cos(θ)
+  double vy  = m_radius * std::sin(m_t);  // y = r·sin(θ)
+  double yaw = m_t + M_PI / 2.0;          // tangent = heading direction
+
+  pubVehicle->publish(makeVehicleMarker(vx, vy, yaw));
+  pubObstacles->publish(makeObstacleMarkers(vx, vy));
+  broadcastTF(vx, vy, yaw);
+}
+```
+
+Obstacle coloring:
+
+```cpp
+double dist = std::sqrt(std::pow(vx-ox,2) + std::pow(vy-oy,2));
+if      (dist < m_danger_dist)  { r=1; g=0; b=0; }  // RED
+else if (dist < m_caution_dist) { r=1; g=1; b=0; }  // YELLOW
+else                            { r=0; g=1; b=0; }  // GREEN
+```
+
+---
+
+# `21. Running ad_viz_node`
+
+## Full autonomous driving visualization
+
+**Step 1 — Launch the node:**
+
+```bash
+irdl_enter
+ros2 launch ad_viz_node deploy.launch.py
+```
+
+**Step 2 — Open RViz2 and add displays:**
+
+```bash
+rviz2   # another terminal
+```
+
+| Add | Type | Topic |
+| --- | --- | --- |
+| Fixed Frame | — | `map` |
+| Path | Path | `/ad/global_path` |
+| Marker | Marker | `/ad/vehicle` |
+| Marker | Marker | `/ad/safety_circle` |
+| MarkerArray | MarkerArray | `/ad/obstacles` |
+| TF | — | — |
+
+> Watch obstacle colors change from green → yellow → red as the vehicle approaches.
+
+---
+
+# `22. ad_viz_node — Parameters`
+
+## Tuning the simulation without recompiling
 
 `config/config.yaml`:
 
 ```yaml
 /**:
   ros__parameters:
-    publish_rate: 20.0   # [Hz]  how often the marker is updated
-    orbit_radius: 2.0    # [m]   how far the sphere orbits from center
-    orbit_period: 5.0    # [s]   time for one full revolution
+    radius: 8.0        # [m]   circular path radius
+    speed: 0.01        # [rad/step] angular speed (step = 50 ms)
+    danger_dist: 3.0   # [m]   distance threshold → RED
+    caution_dist: 6.0  # [m]   distance threshold → YELLOW
 ```
 
-Try changing these values and rebuilding to see the effect:
+Try changing these values and observe the effect:
 
-| Parameter | Small value | Large value |
-| --- | --- | --- |
-| `orbit_radius` | Tight orbit near origin | Wide orbit |
-| `orbit_period` | Fast spinning | Slow spinning |
-| `publish_rate` | Choppy animation | Smooth animation |
-
-```bash
-cd /ros_ws/src/irdl_tiny && ./build.sh
-ros2 launch rviz_marker_node deploy.launch.py
-```
+| Parameter | Effect |
+| --- | --- |
+| `radius` | Larger path circle — some obstacles may never turn red |
+| `speed` | Faster or slower vehicle |
+| `danger_dist` | Widens/narrows the red alert zone |
+| `caution_dist` | Widens/narrows the yellow caution zone |
 
 ---
 
-# `21. Putting It All Together`
+# `23. Putting It All Together`
 
-## Full system: talker → listener + marker visualization
-
-Run all three nodes simultaneously (three terminals):
+## Full system: all nodes running simultaneously
 
 ```bash
-# Terminal 1
+# Terminal 1 — talker
 irdl_enter && ros2 launch talker_node deploy.launch.py
 
-# Terminal 2
+# Terminal 2 — listener
 irdl_enter && ros2 launch listener_node deploy.launch.py
 
-# Terminal 3
-irdl_enter && ros2 launch rviz_marker_node deploy.launch.py
+# Terminal 3 — AD visualization
+irdl_enter && ros2 launch ad_viz_node deploy.launch.py
 
-# Terminal 4 — visualize everything
+# Terminal 4 — RViz2
 irdl_enter && rviz2
 ```
 
-Inspect the full topic map:
+Inspect all active topics:
 
 ```bash
 ros2 topic list
-# /chatter
-# /visualization_marker_array
+# /chatter  /ad/vehicle  /ad/global_path
+# /ad/safety_circle  /ad/obstacles
 ```
 
 > Each node is fully independent. Killing one does not affect the others.
@@ -589,30 +667,28 @@ ros2 topic list
 
 ---
 
-# `22. Lab Exercise`
+# `24. Lab Exercise`
 
 ## Modify and extend the examples
 
-**Exercise 1 — Change publish rate:**
-Edit `talker_node/config/config.yaml`, change `publish_rate` to `5.0`. Rebuild and confirm the listener receives 5 messages per second using `ros2 topic hz /chatter`.
+**Exercise 1 — Change the message:**
+Edit `talker_node/config/config.yaml`, change `message` to your name. Rebuild and confirm the listener receives the new string.
 
-**Exercise 2 — Change the orbit:**
-Edit `rviz_marker_node/config/config.yaml`. Set `orbit_radius: 4.0` and `orbit_period: 2.0`. Observe the result in RViz2.
+**Exercise 2 — Add a new obstacle:**
+In `ad_viz.cpp`, add a new entry to `m_obstacles` in the constructor. Place it at `{3.0, 3.0}` — directly on the path. Observe it turning red.
 
-**Exercise 3 — Add a second marker:**
-In `rviz_marker.cpp`, add a third marker — a red `CUBE` fixed at `(3.0, 0.0, 0.5)` and push it to `marker_array.markers`.
+**Exercise 3 — Change marker type:**
+In `rviz_marker.cpp`, change `CUBE` to `SPHERE` and set color to red (`r=1, g=0, b=0`). Rebuild and verify in RViz2.
 
 ```cpp
-// Hint: copy makeOriginCylinder(), change type and color
-marker.type    = visualization_msgs::msg::Marker::CUBE;
-marker.color.r = 1.0f;
-marker.color.g = 0.0f;
-marker.color.b = 0.0f;
+// Hint: change this line in makeMarker()
+marker.type = visualization_msgs::msg::Marker::SPHERE;
+marker.color.r = 1.0;  marker.color.g = 0.0;  marker.color.b = 0.0;
 ```
 
 ---
 
-# `23. Assignment #3`
+# `25. Assignment #3`
 
 ## Build and demonstrate your ROS2 environment
 
@@ -620,8 +696,9 @@ Submit a short report (screenshots + brief explanation) showing:
 
 1. **Docker image built** — screenshot of `docker images` showing `irdl-tiny-image`.
 2. **talker + listener running** — screenshot of listener terminal receiving messages.
-3. **RViz2 with rviz_marker_node** — screenshot of the orbiting sphere and cylinder.
-4. **Lab Exercise 3 completed** — screenshot showing the red cube at `(3, 0, 0.5)`.
+3. **rviz_marker_node** — screenshot showing the blue cube in RViz2.
+4. **ad_viz_node** — screenshot showing the vehicle, path, and color-coded obstacles.
+5. **Lab Exercise 2 completed** — screenshot showing new obstacle turning red on the path.
 
 **Due:** Next class session.
 
@@ -629,7 +706,7 @@ Submit a short report (screenshots + brief explanation) showing:
 
 ---
 
-# `24. Summary`
+# `26. Summary`
 
 ## What we covered today
 
@@ -637,10 +714,12 @@ Submit a short report (screenshots + brief explanation) showing:
 | --- | --- |
 | Docker | Containers eliminate environment inconsistency |
 | `build_docker.sh` | One script builds for x86, Mac, or Jetson |
+| Build workflow | `./build.sh` → `source install/setup.bash` |
 | ROS2 Node | Inherit `rclcpp::Node`, create pub/sub/timer |
 | Publisher | `create_publisher<T>()` + timer callback + `publish()` |
 | Subscriber | `create_subscription<T>()` + message callback |
 | Parameters | Declare in C++, set in `config.yaml`, load via launch |
-| RViz2 Markers | Publish `MarkerArray` → Fixed Frame → Add display |
+| RViz2 Markers | Publish `Marker/MarkerArray` → Fixed Frame → Add display |
+| ad_viz_node | Vehicle + path + distance-based obstacle coloring |
 
 **Next week:** Coordinate frames, TF2, and transforming between sensor frames.
