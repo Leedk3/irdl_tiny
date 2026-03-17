@@ -15,7 +15,7 @@ tput sgr 0
 
 # directories
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-irdl_tutorial_DIR="$(readlink -f "${SCRIPT_DIR}/../")"
+irdl_tiny_DIR="$(readlink -f "${SCRIPT_DIR}/../")"
 
 # default config
 CONTAINER_NAME="irdl-container-mac"
@@ -94,7 +94,7 @@ done
 
 # docker arguments — no GPU flags for Mac
 DOCKER_ARGS=(
-  -v "${irdl_tutorial_DIR}/../../":"/ros_ws/":z
+  -v "${irdl_tiny_DIR}/../../":"/ros_ws/":z
 
   # no --runtime nvidia / --gpus on Mac
   --network host
@@ -121,7 +121,7 @@ DOCKER_ARGS=(
   -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID}"
   -e DDS_INTERFACE="${DDS_INTERFACE}"
   -e RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION}"
-  -e CYCLONEDDS_URI="/ros_ws/src/irdl_tutorial/.cyclonedds.xml"
+  -e CYCLONEDDS_URI="/ros_ws/src/irdl_tiny/.cyclonedds.xml"
 
   --add-host "${CONTAINER_NAME}:127.0.1.1"
   --name "${CONTAINER_NAME}"

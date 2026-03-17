@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    radius: 8.0        # 원형 경로 반지름 (m)
+    speed: 0.01        # 각속도 (rad/step, step=50ms)
+    danger_dist: 3.0   # 위험 거리 (m) → 빨강
+    caution_dist: 6.0  # 주의 거리 (m) → 노랑

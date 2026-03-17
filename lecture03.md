@@ -184,8 +184,8 @@ docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
 # Create workspace and clone
 mkdir -p /home/${USER}/ros_ws/src
 cd /home/${USER}/ros_ws/src
-git clone --recursive https://github.com/Leedk3/irdl_tutorial.git
-cd irdl_tutorial && git checkout main
+git clone --recursive https://github.com/Leedk3/irdl_tiny.git
+cd irdl_tiny && git checkout main
 
 # Build image (choose your platform)
 cd docker
@@ -212,9 +212,9 @@ echo "export DDS_INTERFACE=eth0" >> ~/.bashrc   # ← change to your NIC
 
 # Container launch alias (choose one)
 # x86:
-echo "alias irdl_enter='cd ~/ros_ws/src/irdl_tutorial/docker && bash run_x86.sh'" >> ~/.bashrc
+echo "alias irdl_enter='cd ~/ros_ws/src/irdl_tiny/docker && bash run_x86.sh'" >> ~/.bashrc
 # Mac:
-echo "alias irdl_enter='cd ~/ros_ws/src/irdl_tutorial/docker && bash run_mac.sh'" >> ~/.bashrc
+echo "alias irdl_enter='cd ~/ros_ws/src/irdl_tiny/docker && bash run_mac.sh'" >> ~/.bashrc
 
 source ~/.bashrc
 irdl_enter   # enter the container
@@ -550,7 +550,7 @@ Try changing these values and rebuilding to see the effect:
 | `publish_rate` | Choppy animation | Smooth animation |
 
 ```bash
-cd /ros_ws/src/irdl_tutorial && ./build.sh
+cd /ros_ws/src/irdl_tiny && ./build.sh
 ros2 launch rviz_marker_node deploy.launch.py
 ```
 

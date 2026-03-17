@@ -69,7 +69,7 @@ ENV USER=$USER
 RUN useradd -u $UID -ms /bin/bash $USER | echo $USER
 ENV CMAKE_MODULE_PATH=/usr/local/share/cmake-3.22/Modules
 
-COPY . /ros_ws/src/irdl_tutorial
+COPY . /ros_ws/src/irdl_tiny
 RUN mkdir -p /ros_ws/build /ros_ws/install /ros_ws/map
 
 RUN chown -R ${USER}:${USER} /ros_ws

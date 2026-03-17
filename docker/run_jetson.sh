@@ -15,7 +15,7 @@ tput sgr 0
 
 # directories
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-irdl_tutorial_DIR="$(readlink -f "${SCRIPT_DIR}/../")"
+irdl_tiny_DIR="$(readlink -f "${SCRIPT_DIR}/../")"
 
 # default config
 GPU_NUM="all"
@@ -123,7 +123,7 @@ done
 
 # docker arguments
 DOCKER_ARGS=(
-  -v "${irdl_tutorial_DIR}/../../":"/ros_ws/":z
+  -v "${irdl_tiny_DIR}/../../":"/ros_ws/":z
 
   --runtime nvidia
   --network host
@@ -142,7 +142,7 @@ DOCKER_ARGS=(
   -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID}"
   -e DDS_INTERFACE="${DDS_INTERFACE}"
   -e RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION}"
-  -e CYCLONEDDS_URI="/ros_ws/src/irdl_tutorial/.cyclonedds.xml"
+  -e CYCLONEDDS_URI="/ros_ws/src/irdl_tiny/.cyclonedds.xml"
 
   --add-host "${CONTAINER_NAME}:127.0.1.1"
   --name "${CONTAINER_NAME}"
@@ -165,7 +165,7 @@ DOCKER_ARGS=(
 
 # dependency vs deploy image
 if [ "${DEPS}" = 1 ]; then
-  DOCKER_ARGS+=(-e PYTHONPATH="${irdl_tutorial_DIR}:${PYTHONPATH}")
+  DOCKER_ARGS+=(-e PYTHONPATH="${irdl_tiny_DIR}:${PYTHONPATH}")
 else
   DOCKER_ARGS+=(-e PYTHONPATH="${PYTHONPATH}")
 fi

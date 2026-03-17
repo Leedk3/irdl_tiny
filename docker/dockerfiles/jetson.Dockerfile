@@ -133,7 +133,7 @@ RUN useradd -u $UID -ms /bin/bash $USER | echo $USER
 ENV CMAKE_MODULE_PATH=/usr/local/share/cmake-3.22/Modules
 
 # RUN useradd -ms /bin/bash usrg
-COPY . /ros_ws/src/irdl_tutorial
+COPY . /ros_ws/src/irdl_tiny
 RUN mkdir /ros_ws/build
 RUN mkdir /ros_ws/install
 RUN mkdir /ros_ws/map

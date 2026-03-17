@@ -68,8 +68,8 @@ docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
 ```bash
 mkdir -p /home/${USER}/ros_ws/src
 cd /home/${USER}/ros_ws/src
-git clone --recursive https://github.com/Leedk3/irdl_tutorial.git
-cd irdl_tutorial
+git clone --recursive https://github.com/Leedk3/irdl_tiny.git
+cd irdl_tiny
 git checkout main
 ```
 
@@ -81,7 +81,7 @@ git checkout main
 ## 3. Build Docker Image
 
 ```bash
-cd /home/${USER}/ros_ws/src/irdl_tutorial/docker
+cd /home/${USER}/ros_ws/src/irdl_tiny/docker
 ```
 
 ### For x86 Desktop (PC / Workstation)
@@ -137,13 +137,13 @@ echo "export DDS_INTERFACE=eth0" >> ~/.bashrc
 ### Container launch alias — x86 Desktop
 
 ```bash
-echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tutorial/docker && bash run_x86.sh'" >> ~/.bashrc
+echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tiny/docker && bash run_x86.sh'" >> ~/.bashrc
 ```
 
 ### Container launch alias — Mac (Apple Silicon)
 
 ```bash
-echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tutorial/docker && bash run_mac.sh'" >> ~/.bashrc
+echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tiny/docker && bash run_mac.sh'" >> ~/.bashrc
 ```
 
 > **GUI on Mac (RViz2)**: See the setup steps below. Mac Docker Desktop runs containers inside a Linux VM, so the standard `/tmp/.X11-unix` socket mount does not work. TCP-based X11 forwarding via XQuartz is required.
@@ -151,7 +151,7 @@ echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tutorial/docker && bash
 ### Container launch alias — Jetson
 
 ```bash
-echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tutorial/docker && bash run_jetson.sh'" >> ~/.bashrc
+echo "alias irdl_enter='cd /home/${USER}/ros_ws/src/irdl_tiny/docker && bash run_jetson.sh'" >> ~/.bashrc
 ```
 
 Apply changes:
@@ -194,7 +194,7 @@ After entering the container, build all packages:
 
 ```bash
 irdl_enter
-cd /ros_ws/src/irdl_tutorial
+cd /ros_ws/src/irdl_tiny
 ./build.sh
 ```
 
