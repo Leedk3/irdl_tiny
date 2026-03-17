@@ -1,6 +1,0 @@
-radar_node:
-  ros__parameters:
-    
-    position:     0
-    ip:           "192.168.137.15" 
-    z_offset: 	  60 

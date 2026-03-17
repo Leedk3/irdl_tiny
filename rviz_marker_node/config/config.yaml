@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    frame_id: "map"
+    scale: 1.0

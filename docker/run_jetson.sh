@@ -123,7 +123,7 @@ done
 
 # docker arguments
 DOCKER_ARGS=(
-  -v "${irdl_tutorial_DIR}/../../":"/irdl_ws/":z
+  -v "${irdl_tutorial_DIR}/../../":"/ros_ws/":z
 
   --runtime nvidia
   --network host
@@ -142,7 +142,7 @@ DOCKER_ARGS=(
   -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID}"
   -e DDS_INTERFACE="${DDS_INTERFACE}"
   -e RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION}"
-  -e CYCLONEDDS_URI="/irdl_ws/src/irdl_tutorial/.cyclonedds.xml"
+  -e CYCLONEDDS_URI="/ros_ws/src/irdl_tutorial/.cyclonedds.xml"
 
   --add-host "${CONTAINER_NAME}:127.0.1.1"
   --name "${CONTAINER_NAME}"
@@ -156,7 +156,7 @@ DOCKER_ARGS=(
   -e TESTSITE_LON_ORIGIN="${TESTSITE_LON_ORIGIN}"
   -e LOG_BAG_LIST="/Ackermann/veh_state /LongiCont/speed_debug /Odometry/base /can_AccBrkSft /can_input_msgs /can_longi_debug /can_steer_debug /gnss1/aiding_status /gnss1/antenna_offset_correction /gnss1/fix /gnss1/fix_info /gnss1/odom /gnss1/time_ref /gnss2/aiding_status /gnss2/antenna_offset_correction /gnss2/fix /gnss2/fix_info /gnss2/odom /gnss2/time_ref /imu/data /imu/secondary/data /ins_localizer/odom /left/velodyne_points /mag /nav/aiding_summary /nav/dual_antenna_status /nav/filtered_imu/data /nav/heading /nav/odom /nav/relative_pos/odom /nav/status /ntrip_client/nmea/sentence /ouster/points /ouster/range_image /right/velodyne_points /tf"
   # misc
-  -w /irdl_ws  # set ros_ws directory as workspace
+  -w /ros_ws  # set ros_ws directory as workspace
   -it  # run container in interactive mode
   # --rm  # automatically remove container when it exits
   --ipc=host
@@ -193,7 +193,7 @@ else
 fi
 
 # my statement
-DOCKER_ARGS+=(-v /home/${HOSTNAME}/irdl_ws/bag:/bag:rw)
+DOCKER_ARGS+=(-v /home/${HOSTNAME}/ros_ws/bag:/bag:rw)
 DOCKER_ARGS+=(--device /dev/input/js0)
 # DOCKER_ARGS+=(-v /home/usrg/Data/Dataset/3D_data/localize/dataset:/home/usrg/deepclr/data/original:rw)
 # DOCKER_ARGS+=(-e KITTI_PATH="/home/usrg/Data/Dataset/3D_data/localize/dataset")
@@ -222,14 +222,14 @@ if docker ps -a --format '{{.Names}}' | grep -w $CONTAINER_NAME &> /dev/null; th
 	if docker ps -a --format '{{.Status}}' | egrep 'Exited' &> /dev/null; then
 		echo "Container is already running. Attach to ${CONTAINER_NAME}"
 		docker start $CONTAINER_NAME 	
-		docker exec -w "/irdl_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh
+		docker exec -w "/ros_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh
 	elif docker ps -a --format '{{.Status}}' | egrep 'Created' &> /dev/null; then
 		echo "Container is already created. Start and attach to ${CONTAINER_NAME}"
 		docker start $CONTAINER_NAME 	
-		docker exec -w "/irdl_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh  
+		docker exec -w "/ros_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh  
 	elif docker ps -a --format '{{.Status}}' | egrep 'Up' &> /dev/null; then
 		echo "Docker is already running"
-		docker exec -w "/irdl_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh
+		docker exec -w "/ros_ws" -it $CONTAINER_NAME bash --init-file /tmp/etri_env.sh
 	fi 
 else
   echo "Opening docker env...."
