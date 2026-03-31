@@ -61,7 +61,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 
 # pip install
 COPY requirements.txt /tmp
-RUN pip install --no-cache-dir "setuptools==65.5.1" "wheel<0.40.0" "pip<24.1"
 RUN cd /tmp && pip install --ignore-installed --no-cache-dir -r requirements.txt
 
 ARG UID=1000
@@ -72,14 +71,6 @@ ENV CMAKE_MODULE_PATH=/usr/local/share/cmake-3.22/Modules
 
 COPY . /ros_ws/src/irdl_tiny
 RUN mkdir -p /ros_ws/build /ros_ws/install /ros_ws/map
-
-# Install f1tenth_gym from bundled source
-RUN pip install --no-cache-dir /ros_ws/src/irdl_tiny/f1tenth_gym_ros/f1tenth_gym
-
-# Upgrade colcon-python-setup-py: apt version has bug with --symlink-install calling
-# 'python setup.py --editable' which is not recognized. Newer pip version fixes this.
-# Pin coverage<7.0: coverage 7.x removed coverage.types which numba depends on.
-RUN pip install --no-cache-dir "colcon-python-setup-py>=0.2.7" "setuptools==65.5.1" "coverage<7.0"
 
 RUN chown -R ${USER}:${USER} /ros_ws
 RUN chmod 755 /ros_ws

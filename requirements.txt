@@ -1,12 +1,9 @@
-# --- 기존 f110_gym 핵심 의존성 ---
-gym==0.21.0
-
-numpy<=1.22.0,>=1.18.0
-Pillow>=9.0.1
-scipy>=1.7.3
-numba>=0.55.2
-pyyaml>=5.3.1
-pyglet<1.5
+numpy
+Pillow
+scipy
+numba
+pyyaml
+pyglet
 pyopengl
 
 filterpy
@@ -21,7 +18,7 @@ easydict
 tqdm
 lxml
 opencv-python
-catkin_pkg
+open3d
 
 # --- 외부 Git 저장소 ---
 git+https://github.com/DanielPollithy/pypcd.git
