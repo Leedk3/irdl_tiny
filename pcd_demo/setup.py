@@ -8,7 +8,13 @@ package_name = 'pcd_demo'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=[package_name, package_name + '.pcd_publisher', package_name + '.pcd_subscriber'],
+    packages=[
+        package_name,
+        package_name + '.pcd_publisher',
+        package_name + '.pcd_static_publisher',
+        package_name + '.pcd_subscriber',
+        package_name + '.pcd_gicp',
+    ],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -20,7 +26,7 @@ setup(
         # And the ply files.
         (os.path.join('share', package_name, "resource"), glob('resource/*.ply')),
     ],
-    install_requires=['setuptools', "open3d"],
+    install_requires=['setuptools', 'open3d', 'small-gicp'],
     zip_safe=True,
     maintainer='Sebastian Grans',
     maintainer_email='sebastian.grans@<somewhere>.com',
@@ -29,7 +35,9 @@ setup(
     entry_points={
         'console_scripts': [
             'pcd_publisher_node = pcd_demo.pcd_publisher.pcd_publisher_node:main',
-            'pcd_subscriber_node = pcd_demo.pcd_subscriber.pcd_subscriber_node:main'
+            'pcd_static_publisher_node = pcd_demo.pcd_static_publisher.pcd_static_publisher_node:main',
+            'pcd_subscriber_node = pcd_demo.pcd_subscriber.pcd_subscriber_node:main',
+            'gicp_registration_node = pcd_demo.pcd_gicp.gicp_registration_node:main',
         ],
     },
 )

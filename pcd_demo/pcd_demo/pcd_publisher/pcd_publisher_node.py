@@ -33,7 +33,7 @@ class PCDPublisher(Node):
         # believe is related to the ROS1 concept of queue size. 
         # Read more here: 
         # http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers
-        self.pcd_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd', 10)
+        self.pcd_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_rotating', 10)
         timer_period = 1/30.0
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -51,11 +51,11 @@ class PCDPublisher(Node):
         # into a sensor_msgs.PointCloud2 object. The second argument is the 
         # name of the frame the point cloud will be represented in. The default
         # (fixed) frame in RViz is called 'map'
-        self.pcd = point_cloud(self.points, 'map')
+        self.pcd = point_cloud(self.points, 'map', self.get_clock().now().to_msg())
         # Then I publish the PointCloud2 object 
         self.pcd_publisher.publish(self.pcd)
 
-def point_cloud(points, parent_frame):
+def point_cloud(points, parent_frame, stamp=None):
     """ Creates a point cloud message.
     Args:
         points: Nx3 array of xyz positions.
@@ -90,6 +90,8 @@ def point_cloud(points, parent_frame):
     # The PointCloud2 message also has a header which specifies which 
     # coordinate frame it is represented in. 
     header = std_msgs.Header(frame_id=parent_frame)
+    if stamp is not None:
+        header.stamp = stamp
 
     return sensor_msgs.PointCloud2(
         header=header,
