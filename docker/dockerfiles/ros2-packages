@@ -55,6 +55,11 @@ ros-$ROS_DISTRO-diagnostic-updater
 
 ros-$ROS_DISTRO-nav2-bringup
 
+# f1tenth_gym_ros dependencies
+ros-$ROS_DISTRO-ackermann-msgs
+ros-$ROS_DISTRO-teleop-twist-keyboard
+ros-$ROS_DISTRO-foxglove-bridge
+
 gstreamer1.0-libav
 gstreamer1.0-nice
 libgstreamer1.0-dev

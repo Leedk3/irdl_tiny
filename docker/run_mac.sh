@@ -98,7 +98,8 @@ DOCKER_ARGS=(
 
   # no --runtime nvidia / --gpus on Mac
   --network host
-
+  # --sysctl net.core.rmem_max=10485760
+  # --sysctl net.core.rmem_default=10485760
   # X11 forwarding via TCP to XQuartz on the Mac host.
   #
   # Prerequisites (run once on your Mac):
